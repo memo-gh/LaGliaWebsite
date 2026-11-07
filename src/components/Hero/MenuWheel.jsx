@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 const MENU_ITEMS = [
-  { id: 'contattaci', label: 'Contattaci', href: '#' },
-  { id: 'vini', label: 'Vini', href: '#' },
-  { id: 'territorio', label: 'Territorio', href: '#' },
-  { id: 'azienda', label: 'Azienda', href: '#' },
+  { id: 'contattaci', label: 'Contattaci', href: '#contattaci' },
+  { id: 'vini', label: 'Vini', href: '#vini' },
+  { id: 'territorio', label: 'Territorio', href: '#territorio' },
+  { id: 'azienda', label: 'Azienda', href: '#azienda' },
 ]
 
 // 4 fixed angular slots (in degrees) surrounding the outer red circle:

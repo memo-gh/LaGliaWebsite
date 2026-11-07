@@ -16,6 +16,14 @@ export default function Hero() {
     window.location.hash = item.href
   }
 
+  // Left-side text sequence (bottom-left -> up toward top-right):
+  // 1. "Terra." (750ms) -> 2. "Radici" (890ms) -> 3. "Vino" (1030ms) -> 4. "LA GLIA winery" (1170ms)
+  const heroLines = [
+    { text: 'Tra Scienza', delayMs: 1030},
+    { text: 'e Design', delayMs: 890 },
+
+  ]
+
   return (
     <section className="relative h-dvh max-h-dvh w-full overflow-hidden bg-neutral-900 text-white select-none">
       {/* Background Image: fits webpage viewport height and crops from the top (object-bottom) */}
@@ -55,53 +63,24 @@ export default function Hero() {
           </span>
         </header>
 
-        {/* Main Typography: "Tra Scienza" and "e Design" */}
+        {/* Main Typography: "Vino", "Radici", "Terra." appearing bottom-to-top (Terra. -> Radici -> Vino) */}
         <div className="mt-4 sm:mt-5 md:mt-6">
           <h1 className="font-sans font-bold text-white text-6xl sm:text-7xl md:text-[6.8rem] lg:text-[8.2rem] xl:text-[9rem] leading-[1.05] tracking-[-0.025em]">
-            {/* Line 1: "Tra Scienza" */}
-            <span
-              style={{
-                opacity: isLoaded ? 1 : 0,
-                transform: isLoaded
-                  ? 'translate3d(0, 0, 0)'
-                  : 'translate3d(-16px, 16px, 0)',
-                transition:
-                  'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 1030ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 1030ms',
-              }}
-              className="block"
-            >
-              Tra Scienza
-            </span>
-
-            {/* Line 2: "e" (separate cursive element in #BD3B28 with its own delay) + "Design" on the same line */}
-            <span className="flex items-baseline gap-3 sm:gap-5 whitespace-nowrap">
+            {heroLines.map((line) => (
               <span
+                key={line.text}
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded
                     ? 'translate3d(0, 0, 0)'
                     : 'translate3d(-16px, 16px, 0)',
-                  transition:
-                    'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms',
+                  transition: `opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) ${line.delayMs}ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) ${line.delayMs}ms`,
                 }}
-                className="inline-block font-serif italic font-normal text-[#BD3B28] pr-1"
+                className="block"
               >
-                e
+                {line.text}
               </span>
-              <span
-                style={{
-                  opacity: isLoaded ? 1 : 0,
-                  transform: isLoaded
-                    ? 'translate3d(0, 0, 0)'
-                    : 'translate3d(-16px, 16px, 0)',
-                  transition:
-                    'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 890ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 890ms',
-                }}
-                className="inline-block"
-              >
-                Design
-              </span>
-            </span>
+            ))}
           </h1>
         </div>
       </div>
