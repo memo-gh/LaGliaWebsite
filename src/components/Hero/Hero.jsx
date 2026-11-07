@@ -13,16 +13,16 @@ export default function Hero() {
   }, [])
 
   const handleNavigate = (item) => {
-    window.location.hash = item.href
+    if (!item?.href || item.href === '#') return
+    const targetId = item.href.replace(/^#/, '')
+    const targetEl = document.getElementById(targetId)
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      window.history.replaceState(null, '', item.href)
+    } else {
+      window.location.hash = item.href
+    }
   }
-
-  // Left-side text sequence (bottom-left -> up toward top-right):
-  // 1. "Terra." (750ms) -> 2. "Radici" (890ms) -> 3. "Vino" (1030ms) -> 4. "LA GLIA winery" (1170ms)
-  const heroLines = [
-    { text: 'Tra Scienza', delayMs: 1030},
-    { text: 'e Design', delayMs: 890 },
-
-  ]
 
   return (
     <section className="relative h-dvh max-h-dvh w-full overflow-hidden bg-neutral-900 text-white select-none">
@@ -37,15 +37,15 @@ export default function Hero() {
       </div>
 
       {/* Left Column: Header + Main Stacked Display Typography vertically centered in line with MenuWheel */}
-      <div className="relative z-10 flex h-full w-full flex-col justify-center px-7 sm:px-12 md:px-14">
+      <div className="relative z-10 flex h-full w-full flex-col justify-center pl-[clamp(1rem,2.8vw,3rem)] pr-6">
         {/* Header: Red Circle Logo Placeholder (drawn top-to-bottom) + "LA GLIA winery" (appears at 1170ms) */}
-        <header className="flex items-end gap-3.5">
+        <header className="-ml-[clamp(0.35rem,1.1vw,1.35rem)] flex items-end gap-[clamp(0.65rem,1.2vw,1.5rem)]">
           <div
             style={{
               clipPath: isLoaded ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
               transition: 'clip-path 750ms cubic-bezier(0.22, 1, 0.36, 1) 0ms',
             }}
-            className="h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-[#BD3B28] shrink-0"
+            className="h-[clamp(2.25rem,4.2vw,5.25rem)] w-[clamp(2.25rem,4.2vw,5.25rem)] rounded-full bg-[#BD3B28] shrink-0"
             aria-label="La Glia logo placeholder"
           />
           <span
@@ -57,30 +57,59 @@ export default function Hero() {
               transition:
                 'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 1170ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 1170ms',
             }}
-            className="font-serif text-lg sm:text-xl md:text-[23px] font-normal tracking-wide text-white leading-none pb-0.5"
+            className="font-serif text-[clamp(1.1rem,2.1vw,2.75rem)] font-normal tracking-wide text-white leading-none pb-[0.12em]"
           >
             LA GLIA winery
           </span>
         </header>
 
-        {/* Main Typography: "Vino", "Radici", "Terra." appearing bottom-to-top (Terra. -> Radici -> Vino) */}
-        <div className="mt-4 sm:mt-5 md:mt-6">
-          <h1 className="font-sans font-bold text-white text-6xl sm:text-7xl md:text-[6.8rem] lg:text-[8.2rem] xl:text-[9rem] leading-[1.05] tracking-[-0.025em]">
-            {heroLines.map((line) => (
+        {/* Main Typography: "Tra Scienza" and "e Design" scaling dynamically with viewport */}
+        <div className="mt-[clamp(0.75rem,1.6vw,1.75rem)]">
+          <h1 className="font-sans font-bold text-white text-[clamp(3.2rem,9.4vw,13rem)] leading-[1.04] tracking-[-0.025em]">
+            {/* Line 1: "Tra Scienza" */}
+            <span
+              style={{
+                opacity: isLoaded ? 1 : 0,
+                transform: isLoaded
+                  ? 'translate3d(0, 0, 0)'
+                  : 'translate3d(-16px, 16px, 0)',
+                transition:
+                  'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 1030ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 1030ms',
+              }}
+              className="block"
+            >
+              Tra Scienza
+            </span>
+
+            {/* Line 2: "e" (italic serif in #BD3B28 with its own delay) + "Design" on the same line */}
+            <span className="flex items-baseline gap-[clamp(0.6rem,1.4vw,1.6rem)] whitespace-nowrap">
               <span
-                key={line.text}
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded
                     ? 'translate3d(0, 0, 0)'
                     : 'translate3d(-16px, 16px, 0)',
-                  transition: `opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) ${line.delayMs}ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) ${line.delayMs}ms`,
+                  transition:
+                    'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms',
                 }}
-                className="block"
+                className="inline-block font-serif italic font-normal text-[#BD3B28] pr-[0.06em]"
               >
-                {line.text}
+                e
               </span>
-            ))}
+              <span
+                style={{
+                  opacity: isLoaded ? 1 : 0,
+                  transform: isLoaded
+                    ? 'translate3d(0, 0, 0)'
+                    : 'translate3d(-16px, 16px, 0)',
+                  transition:
+                    'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 890ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 890ms',
+                }}
+                className="inline-block"
+              >
+                Design
+              </span>
+            </span>
           </h1>
         </div>
       </div>
