@@ -197,7 +197,7 @@ export default function Terroir() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[85dvh] w-full bg-[#565142] text-white select-none overflow-hidden py-8 sm:py-12 md:py-16 flex items-center"
+      className="relative min-h-[85dvh] w-full bg-[linear-gradient(180deg,#1B2410_0%,#28311B_28%,#3B3E2A_64%,#4E4A3A_100%)] text-white select-none overflow-hidden py-8 sm:py-12 md:py-16 flex items-center"
     >
       {/* Proportional 1052 x 417 architectural canvas matching the screenshot */}
       <div
@@ -376,7 +376,7 @@ export default function Terroir() {
               }}
               className={`group absolute cursor-pointer overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-white/80 ${
                 isActive
-                  ? 'z-10 bg-[#4B4638]/95 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]'
+                  ? 'z-10 bg-[#2B311F]/95 backdrop-blur-xs shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]'
                   : isHovered
                     ? 'z-10 bg-white/[0.07] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]'
                     : 'z-0 bg-transparent'
