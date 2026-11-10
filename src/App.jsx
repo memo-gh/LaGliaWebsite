@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react'
 import Hero from './components/Hero/Hero'
 import Terroir from './components/terroir'
 import Company from './components/Company'
+import Wine from './components/Wine'
 import ScrollToTop from './components/ScrollToTop'
 import './App.css'
 
@@ -25,6 +26,7 @@ function App() {
       <Hero />
       <Terroir />
       <Company />
+      <Wine />
       <ScrollToTop />
     </main>
   )
