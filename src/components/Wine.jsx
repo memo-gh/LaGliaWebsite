@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import merlotBottleImg from '../assets/merlot-bottle.png'
+import comingSoonBottleImg from '../assets/pngwing.com(1).png'
 import wineBarIcon from '../assets/wine_bar_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import nutritionIcon from '../assets/nutrition_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import restaurantIcon from '../assets/restaurant_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
@@ -16,8 +17,16 @@ const BOTTOM_LINE_X_PCT = (604.5 / CANVAS_W) * 100
 const RED_CARD_W = 801
 const RED_CARD_H = 295
 
-const BASE_BLUE_WIDTH_PCT = ((1006 - 891) / CANVAS_W) * 100
-const BASE_BLUE_RIGHT_PCT = ((CANVAS_W - 1006) / CANVAS_W) * 100
+// Widths & horizontal coordinates (% of CANVAS_W = 1045)
+const EXPANDED_WIDTH_PCT = (RED_CARD_W / CANVAS_W) * 100
+const BASE_SQUEEZED_WIDTH_PCT = ((1006 - 891) / CANVAS_W) * 100
+const BASE_RED_LEFT_PCT = (56 / CANVAS_W) * 100
+const RIGHT_SLOT_LEFT_PCT = (891 / CANVAS_W) * 100
+const BLUE_EXPANDED_LEFT_PCT = ((1006 - RED_CARD_W) / CANVAS_W) * 100
+
+// Heights & vertical coordinates (% of CANVAS_H = 512)
+const CARD_TOP_PCT = (108 / CANVAS_H) * 100
+const CARD_HEIGHT_PCT = (RED_CARD_H / CANVAS_H) * 100
 
 function clamp01(val) {
   return Math.max(0, Math.min(1, val))
@@ -41,6 +50,17 @@ const DESCRIPTION_LINES = [
   'nostrud aliqua cupidatat. Vero laborum',
   'officia qui nulla nostrud excepteur fugiat',
   'lorem. Iusto deserunt elit lorem',
+]
+
+const COMING_SOON_LINES = [
+  'Un nuovo capitolo della nostra cantina',
+  'sta maturando lentamente in botte.',
+  'Curiamo ogni dettaglio con dedizione',
+  'per offrirvi un vino dal carattere autentico.',
+  'Il tempo e il terroir stanno compiendo',
+  'la loro magia silenziosa.',
+  'Presto disponibile per la degustazione',
+  'e la scoperta in anteprima.',
 ]
 
 const WINE_SPECS = [
@@ -70,19 +90,257 @@ const WINE_SPECS = [
   },
 ]
 
+const COMING_SOON_SPECS = [
+  {
+    id: 'alcohol',
+    icon: wineBarIcon,
+    label: '? % vol.',
+    topPx: 125,
+    start: 0.56,
+    end: 0.82,
+  },
+  {
+    id: 'grape',
+    icon: nutritionIcon,
+    label: 'In Affinamento',
+    topPx: 162,
+    start: 0.62,
+    end: 0.88,
+  },
+  {
+    id: 'pairing',
+    icon: restaurantIcon,
+    label: 'Prossimamente',
+    topPx: 199,
+    start: 0.68,
+    end: 0.94,
+  },
+]
+
+const DETAIL_CATEGORIES = [
+  {
+    id: 'cat-tl',
+    lineLeft: 53.7,
+    textLeft: 62.3,
+    lineTop: 76.7,
+    lineHeight: 52,
+    catTop: 80,
+    valTop: 105,
+    category: 'CATEGORIA',
+    value: 'Lorem ipsum',
+    colIdx: 0,
+  },
+  {
+    id: 'cat-bl',
+    lineLeft: 53.7,
+    textLeft: 62.3,
+    lineTop: 161.1,
+    lineHeight: 52.1,
+    catTop: 165,
+    valTop: 190,
+    category: 'CATEGORIA',
+    value: 'Lorem ipsum',
+    colIdx: 0,
+  },
+  {
+    id: 'cat-tm',
+    lineLeft: 254.2,
+    textLeft: 262,
+    lineTop: 76.7,
+    lineHeight: 52,
+    catTop: 80,
+    valTop: 105,
+    category: 'CATEGORIA',
+    value: 'Lorem ipsum',
+    colIdx: 1,
+  },
+  {
+    id: 'cat-bm',
+    lineLeft: 254.2,
+    textLeft: 262,
+    lineTop: 161.1,
+    lineHeight: 52.1,
+    catTop: 165,
+    valTop: 190,
+    category: 'CATEGORIA',
+    value: 'Lorem ipsum',
+    colIdx: 1,
+  },
+]
+
+const VINIFICAZIONE_LINES = [
+  'Lorem ipsum sit dolor',
+  'amet gozzi stragozzi punli',
+  'Lorem ipsum sit dolor',
+  'amet gozzi stragozzi punli',
+  'Lorem ipsum sit dolor',
+  'amet gozzi stragozzi punli',
+]
+
+const RED_SQUEEZED_BG =
+  'linear-gradient(270deg, #BB4732 0%, #943726 35%, #662519 70%, #3A140D 100%)'
+const BLUE_SQUEEZED_BG =
+  'linear-gradient(90deg, #1B6091 0%, #164C73 35%, #10344E 70%, #092132 100%)'
+
+function getLayoutConfig(active) {
+  if (active === 'red') {
+    return {
+      red: {
+        left: BASE_RED_LEFT_PCT,
+        top: CARD_TOP_PCT,
+        width: EXPANDED_WIDTH_PCT,
+        height: CARD_HEIGHT_PCT,
+        gradOpacity: 0,
+        cardOpacity: 1,
+        pointerEvents: 'auto',
+        mode: 'expanded',
+      },
+      blue: {
+        left: RIGHT_SLOT_LEFT_PCT,
+        top: CARD_TOP_PCT,
+        width: BASE_SQUEEZED_WIDTH_PCT,
+        height: CARD_HEIGHT_PCT,
+        gradOpacity: 1,
+        cardOpacity: 1,
+        pointerEvents: 'auto',
+        mode: 'squeezed-right',
+      },
+    }
+  }
+
+  // active === 'blue': Red is squeezed on the left, Blue ("Prossimamente") expands on the right
+  return {
+    red: {
+      left: BASE_RED_LEFT_PCT,
+      top: CARD_TOP_PCT,
+      width: BASE_SQUEEZED_WIDTH_PCT,
+      height: CARD_HEIGHT_PCT,
+      gradOpacity: 1,
+      cardOpacity: 1,
+      pointerEvents: 'auto',
+      mode: 'squeezed-left',
+    },
+    blue: {
+      left: BLUE_EXPANDED_LEFT_PCT,
+      top: CARD_TOP_PCT,
+      width: EXPANDED_WIDTH_PCT,
+      height: CARD_HEIGHT_PCT,
+      gradOpacity: 0,
+      cardOpacity: 1,
+      pointerEvents: 'auto',
+      mode: 'expanded',
+    },
+  }
+}
+
 export default function Wine() {
   const sectionRef = useRef(null)
+
+  // Red card refs
   const redShiftWrapRef = useRef(null)
   const redTiltCardRef = useRef(null)
-  const bottleWrapRef = useRef(null)
-  const glareRef = useRef(null)
-  const blueCardRef = useRef(null)
+  const redSqueezedGradientRef = useRef(null)
+  const redInnerContentRef = useRef(null)
+  const redBottleWrapRef = useRef(null)
+  const redGlareRef = useRef(null)
+  const redArrowRef = useRef(null)
+  const redDetailOverlayRef = useRef(null)
+  const redDetailEdgeRef = useRef(null)
+
+  // Blue ("Prossimamente") card refs
+  const blueShiftWrapRef = useRef(null)
+  const blueTiltCardRef = useRef(null)
+  const blueSqueezedGradientRef = useRef(null)
+  const blueInnerContentRef = useRef(null)
+  const blueBottleWrapRef = useRef(null)
+  const blueGlareRef = useRef(null)
   const blueArrowRef = useRef(null)
+  const blueDetailOverlayRef = useRef(null)
+  const blueDetailEdgeRef = useRef(null)
 
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
   const [progress, setProgress] = useState(0)
-  const [isDetailHovered, setIsDetailHovered] = useState(false)
+
+  // Which card is currently expanded: 'red' (default) or 'blue' (Prossimamente)
+  const [activeCard, setActiveCard] = useState('red')
+  const [hoveredDetailCard, setHoveredDetailCard] = useState(null)
+  const [openDetails, setOpenDetails] = useState({
+    red: false,
+    blue: false,
+  })
+  const detailClipRef = useRef({
+    red: 'inset(0 100% 0 0)',
+    blue: 'inset(0 100% 0 0)',
+  })
+  const innerOpacityRef = useRef({
+    red: 1,
+    blue: 0,
+  })
+
+  const getCardRefs = (key) => {
+    if (key === 'red') {
+      return {
+        shiftWrap: redShiftWrapRef.current,
+        tiltCard: redTiltCardRef.current,
+        gradient: redSqueezedGradientRef.current,
+        inner: redInnerContentRef.current,
+        bottle: redBottleWrapRef.current,
+        glare: redGlareRef.current,
+        arrow: redArrowRef.current,
+        detailOverlay: redDetailOverlayRef.current,
+        detailEdge: redDetailEdgeRef.current,
+      }
+    }
+    return {
+      shiftWrap: blueShiftWrapRef.current,
+      tiltCard: blueTiltCardRef.current,
+      gradient: blueSqueezedGradientRef.current,
+      inner: blueInnerContentRef.current,
+      bottle: blueBottleWrapRef.current,
+      glare: blueGlareRef.current,
+      arrow: blueArrowRef.current,
+      detailOverlay: blueDetailOverlayRef.current,
+      detailEdge: blueDetailEdgeRef.current,
+    }
+  }
+
+  useLayoutEffect(() => {
+    const initial = getLayoutConfig('red')
+
+    ;['red', 'blue'].forEach((key) => {
+      const refs = getCardRefs(key)
+      const cfg = initial[key]
+
+      if (refs.shiftWrap) {
+        gsap.set(refs.shiftWrap, {
+          left: `${cfg.left}%`,
+          top: `${cfg.top}%`,
+          width: `${cfg.width}%`,
+          height: `${cfg.height}%`,
+          opacity: cfg.cardOpacity,
+          xPercent: 0,
+        })
+      }
+      if (refs.gradient) {
+        gsap.set(refs.gradient, { opacity: cfg.gradOpacity })
+      }
+      if (refs.inner) {
+        gsap.set(refs.inner, { opacity: key === 'red' ? 1 : 0 })
+      }
+      if (refs.detailOverlay) {
+        gsap.set(refs.detailOverlay, { clipPath: 'inset(0 100% 0 0)' })
+      }
+      if (refs.arrow) {
+        gsap.set(refs.arrow, {
+          opacity: 0,
+          x: key === 'red' ? 16 : -16,
+          scale: 0.78,
+          rotation: 0,
+        })
+      }
+    })
+  }, [])
 
   useEffect(() => {
     let rafId = null
@@ -136,9 +394,258 @@ export default function Wine() {
     }
   }, [])
 
-  // GSAP 3D Tilt hover handlers for the red rectangle
-  const handleRedMouseMove = (e) => {
-    const cardEl = redTiltCardRef.current
+  // Vertical Left-to-Right reveal / close animation for "I Dettagli"
+  const animateDetailsToggle = (cardKey, shouldOpen) => {
+    const refs = getCardRefs(cardKey)
+    const overlayEl = refs.detailOverlay
+    const edgeEl = refs.detailEdge
+
+    setOpenDetails((prev) => ({ ...prev, [cardKey]: shouldOpen }))
+
+    if (!overlayEl) return
+
+    const lines = overlayEl.querySelectorAll('[data-detail-line]')
+    const items = overlayEl.querySelectorAll('[data-detail-item]')
+
+    if (shouldOpen) {
+      gsap.killTweensOf([overlayEl, edgeEl, ...lines, ...items])
+      detailClipRef.current[cardKey] = 'inset(0 0% 0 0)'
+
+      gsap.fromTo(
+        overlayEl,
+        { clipPath: 'inset(0 100% 0 0)' },
+        {
+          clipPath: 'inset(0 0% 0 0)',
+          duration: 0.72,
+          ease: 'power3.inOut',
+          overwrite: 'auto',
+          onUpdate: () => {
+            if (overlayEl.style.clipPath) {
+              detailClipRef.current[cardKey] = overlayEl.style.clipPath
+            }
+          },
+          onComplete: () => {
+            detailClipRef.current[cardKey] = 'inset(0 0% 0 0)'
+          },
+        }
+      )
+
+      if (edgeEl) {
+        gsap.fromTo(
+          edgeEl,
+          { left: '0%', opacity: 0.95 },
+          {
+            left: '100%',
+            opacity: 0,
+            duration: 0.72,
+            ease: 'power3.inOut',
+            overwrite: 'auto',
+          }
+        )
+      }
+
+      if (lines.length) {
+        gsap.fromTo(
+          lines,
+          { scaleY: 0 },
+          {
+            scaleY: 1,
+            duration: 0.5,
+            stagger: 0.07,
+            delay: 0.14,
+            ease: 'power3.out',
+            overwrite: 'auto',
+          }
+        )
+      }
+
+      if (items.length) {
+        gsap.fromTo(
+          items,
+          { opacity: 0, x: -16 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.46,
+            stagger: 0.045,
+            delay: 0.16,
+            ease: 'power3.out',
+            overwrite: 'auto',
+          }
+        )
+      }
+    } else {
+      detailClipRef.current[cardKey] = 'inset(0 100% 0 0)'
+
+      gsap.to(overlayEl, {
+        clipPath: 'inset(0 100% 0 0)',
+        duration: 0.56,
+        ease: 'power3.inOut',
+        overwrite: 'auto',
+        onUpdate: () => {
+          if (overlayEl.style.clipPath) {
+            detailClipRef.current[cardKey] = overlayEl.style.clipPath
+          }
+        },
+        onComplete: () => {
+          detailClipRef.current[cardKey] = 'inset(0 100% 0 0)'
+        },
+      })
+
+      if (edgeEl) {
+        gsap.fromTo(
+          edgeEl,
+          { left: '100%', opacity: 0.85 },
+          {
+            left: '0%',
+            opacity: 0,
+            duration: 0.56,
+            ease: 'power3.inOut',
+            overwrite: 'auto',
+          }
+        )
+      }
+    }
+  }
+
+  // Expand / Squeeze transition between Red and Blue ("Prossimamente") cards
+  const handleSelectCard = (targetCard) => {
+    if (targetCard === activeCard) return
+
+    // Close any open details overlay on non-target cards
+    ;['red', 'blue'].forEach((key) => {
+      if (key !== targetCard && openDetails[key]) {
+        animateDetailsToggle(key, false)
+      }
+    })
+
+    setActiveCard(targetCard)
+    const layout = getLayoutConfig(targetCard)
+
+    ;['red', 'blue'].forEach((key) => {
+      const refs = getCardRefs(key)
+      const cfg = layout[key]
+      const isExpanding = key === targetCard
+
+      // Reset 3D tilt, glare, and hover arrow
+      if (refs.tiltCard) {
+        gsap.to(refs.tiltCard, {
+          rotateX: 0,
+          rotateY: 0,
+          scale: 1,
+          boxShadow: isExpanding
+            ? '0px 10px 26px rgba(0, 0, 0, 0.24)'
+            : '0 8px 22px rgba(0, 0, 0, 0.24)',
+          duration: 0.5,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.bottle) {
+        gsap.to(refs.bottle, {
+          x: 0,
+          y: 0,
+          rotation: 0,
+          scale: 1,
+          duration: 0.5,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.glare) {
+        gsap.to(refs.glare, { opacity: 0, duration: 0.25, overwrite: 'auto' })
+      }
+      if (refs.arrow) {
+        gsap.to(refs.arrow, {
+          opacity: 0,
+          x: key === 'red' ? 16 : -16,
+          scale: 0.78,
+          rotation: 0,
+          duration: 0.24,
+          ease: 'power2.out',
+          overwrite: 'auto',
+        })
+      }
+
+      // Morph card wrapper position & size
+      if (refs.shiftWrap) {
+        gsap.to(refs.shiftWrap, {
+          left: `${cfg.left}%`,
+          top: `${cfg.top}%`,
+          width: `${cfg.width}%`,
+          height: `${cfg.height}%`,
+          opacity: cfg.cardOpacity,
+          xPercent: 0,
+          duration: 0.72,
+          ease: 'power3.inOut',
+          overwrite: 'auto',
+        })
+      }
+
+      // Fade dark gradient in when squeezed, or out when expanded
+      if (refs.gradient) {
+        gsap.to(refs.gradient, {
+          opacity: cfg.gradOpacity,
+          duration: 0.72,
+          ease: 'power3.inOut',
+          overwrite: 'auto',
+        })
+      }
+
+      // Fade inner wine content in/out
+      if (refs.inner) {
+        if (isExpanding) {
+          gsap.fromTo(
+            refs.inner,
+            { opacity: innerOpacityRef.current[key] },
+            {
+              opacity: 1,
+              duration: 0.46,
+              delay: 0.24,
+              ease: 'power2.out',
+              overwrite: 'auto',
+              onUpdate: () => {
+                if (refs.inner) {
+                  innerOpacityRef.current[key] = Number(
+                    gsap.getProperty(refs.inner, 'opacity')
+                  )
+                }
+              },
+              onComplete: () => {
+                innerOpacityRef.current[key] = 1
+              },
+            }
+          )
+        } else {
+          gsap.to(refs.inner, {
+            opacity: 0,
+            duration: 0.22,
+            ease: 'power2.out',
+            overwrite: 'auto',
+            onUpdate: () => {
+              if (refs.inner) {
+                innerOpacityRef.current[key] = Number(
+                  gsap.getProperty(refs.inner, 'opacity')
+                )
+              }
+            },
+            onComplete: () => {
+              innerOpacityRef.current[key] = 0
+            },
+          })
+        }
+      }
+    })
+  }
+
+  // GSAP 3D Tilt hover handlers for whichever card is currently expanded
+  const handleExpandedMouseMove = (e, cardKey) => {
+    if (activeCard !== cardKey) return
+    const refs = getCardRefs(cardKey)
+    const cardEl = refs.tiltCard
+    const bottleEl = refs.bottle
+    const glareEl = refs.glare
+
     if (!cardEl) return
     const rect = cardEl.getBoundingClientRect()
     const relX = (e.clientX - rect.left) / rect.width
@@ -156,8 +663,8 @@ export default function Wine() {
       overwrite: 'auto',
     })
 
-    if (bottleWrapRef.current) {
-      gsap.to(bottleWrapRef.current, {
+    if (bottleEl) {
+      gsap.to(bottleEl, {
         x: nx * 9,
         y: ny * 7,
         rotation: nx * 2.2,
@@ -168,8 +675,8 @@ export default function Wine() {
       })
     }
 
-    if (glareRef.current) {
-      gsap.to(glareRef.current, {
+    if (glareEl) {
+      gsap.to(glareEl, {
         opacity: 0.16,
         background: `radial-gradient(circle at ${relX * 100}% ${relY * 100}%, rgba(255, 249, 238, 0.55) 0%, rgba(255, 249, 238, 0) 62%)`,
         duration: 0.25,
@@ -179,9 +686,15 @@ export default function Wine() {
     }
   }
 
-  const handleRedMouseLeave = () => {
-    if (redTiltCardRef.current) {
-      gsap.to(redTiltCardRef.current, {
+  const handleExpandedMouseLeave = (cardKey) => {
+    if (activeCard !== cardKey) return
+    const refs = getCardRefs(cardKey)
+    const cardEl = refs.tiltCard
+    const bottleEl = refs.bottle
+    const glareEl = refs.glare
+
+    if (cardEl) {
+      gsap.to(cardEl, {
         rotateX: 0,
         rotateY: 0,
         scale: 1,
@@ -192,8 +705,8 @@ export default function Wine() {
       })
     }
 
-    if (bottleWrapRef.current) {
-      gsap.to(bottleWrapRef.current, {
+    if (bottleEl) {
+      gsap.to(bottleEl, {
         x: 0,
         y: 0,
         rotation: 0,
@@ -204,8 +717,8 @@ export default function Wine() {
       })
     }
 
-    if (glareRef.current) {
-      gsap.to(glareRef.current, {
+    if (glareEl) {
+      gsap.to(glareEl, {
         opacity: 0,
         duration: 0.45,
         ease: 'power2.out',
@@ -214,65 +727,147 @@ export default function Wine() {
     }
   }
 
-  // GSAP width-amplifying + big #FFF9EE arrow hover handlers for the blue rectangle
-  const handleBlueMouseEnter = () => {
-    if (blueCardRef.current) {
-      gsap.to(blueCardRef.current, {
-        width: `${BASE_BLUE_WIDTH_PCT * 1.42}%`,
-        right: `${Math.max(1.2, BASE_BLUE_RIGHT_PCT - 1.55)}%`,
-        boxShadow: '0 16px 36px rgba(12, 140, 233, 0.26)',
-        duration: 0.48,
-        ease: 'power3.out',
-        overwrite: 'auto',
-      })
-    }
+  // Hover handlers for non-expanded cards (squeezed vertical bars)
+  const handleNonActiveMouseEnter = (cardKey) => {
+    if (activeCard === cardKey) return
+    const layout = getLayoutConfig(activeCard)
+    const cfg = layout[cardKey]
+    if (!cfg) return
 
-    if (blueArrowRef.current) {
-      gsap.to(blueArrowRef.current, {
-        opacity: 1,
-        x: 0,
-        scale: 1,
-        duration: 0.42,
-        ease: 'back.out(1.6)',
-        overwrite: 'auto',
-      })
-    }
+    const refs = getCardRefs(cardKey)
+    const activeRefs = getCardRefs(activeCard)
 
-    if (redShiftWrapRef.current) {
-      gsap.to(redShiftWrapRef.current, {
-        xPercent: -1.8,
-        duration: 0.48,
-        ease: 'power3.out',
-        overwrite: 'auto',
-      })
+    const glowShadow =
+      cardKey === 'red'
+        ? '0 16px 36px rgba(187, 71, 50, 0.36)'
+        : '0 16px 36px rgba(12, 140, 233, 0.3)'
+
+    if (cfg.mode === 'squeezed-right') {
+      const hoverWidth = cfg.width * 1.42
+      const extraWidth = hoverWidth - cfg.width
+      const hoverLeft = cfg.left - extraWidth + 1.55
+
+      if (refs.shiftWrap) {
+        gsap.to(refs.shiftWrap, {
+          width: `${hoverWidth}%`,
+          left: `${hoverLeft}%`,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.tiltCard) {
+        gsap.to(refs.tiltCard, {
+          boxShadow: glowShadow,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.arrow) {
+        gsap.to(refs.arrow, {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          rotation: 0,
+          duration: 0.42,
+          ease: 'back.out(1.6)',
+          overwrite: 'auto',
+        })
+      }
+      if (activeRefs.shiftWrap) {
+        gsap.to(activeRefs.shiftWrap, {
+          xPercent: -1.8,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+    } else if (cfg.mode === 'squeezed-left') {
+      const hoverWidth = cfg.width * 1.42
+      const hoverLeft = Math.max(1.2, cfg.left - 1.55)
+
+      if (refs.shiftWrap) {
+        gsap.to(refs.shiftWrap, {
+          width: `${hoverWidth}%`,
+          left: `${hoverLeft}%`,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.tiltCard) {
+        gsap.to(refs.tiltCard, {
+          boxShadow: glowShadow,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
+      if (refs.arrow) {
+        gsap.to(refs.arrow, {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          rotation: 0,
+          duration: 0.42,
+          ease: 'back.out(1.6)',
+          overwrite: 'auto',
+        })
+      }
+      if (activeRefs.shiftWrap) {
+        gsap.to(activeRefs.shiftWrap, {
+          xPercent: 1.8,
+          duration: 0.48,
+          ease: 'power3.out',
+          overwrite: 'auto',
+        })
+      }
     }
   }
 
-  const handleBlueMouseLeave = () => {
-    if (blueCardRef.current) {
-      gsap.to(blueCardRef.current, {
-        width: `${BASE_BLUE_WIDTH_PCT}%`,
-        right: `${BASE_BLUE_RIGHT_PCT}%`,
+  const handleNonActiveMouseLeave = (cardKey) => {
+    if (activeCard === cardKey) return
+    const layout = getLayoutConfig(activeCard)
+    const cfg = layout[cardKey]
+    if (!cfg) return
+
+    const refs = getCardRefs(cardKey)
+    const activeRefs = getCardRefs(activeCard)
+
+    if (refs.shiftWrap) {
+      gsap.to(refs.shiftWrap, {
+        left: `${cfg.left}%`,
+        top: `${cfg.top}%`,
+        width: `${cfg.width}%`,
+        height: `${cfg.height}%`,
+        duration: 0.56,
+        ease: 'power3.out',
+        overwrite: 'auto',
+      })
+    }
+    if (refs.tiltCard) {
+      gsap.to(refs.tiltCard, {
+        scale: 1,
         boxShadow: '0 8px 22px rgba(0, 0, 0, 0.24)',
         duration: 0.56,
         ease: 'power3.out',
         overwrite: 'auto',
       })
     }
-
-    if (blueArrowRef.current) {
-      gsap.to(blueArrowRef.current, {
+    if (refs.arrow) {
+      gsap.to(refs.arrow, {
         opacity: 0,
-        x: -16,
+        x: cardKey === 'red' ? 16 : -16,
         scale: 0.78,
+        rotation: 0,
         duration: 0.34,
         ease: 'power2.inOut',
         overwrite: 'auto',
       })
     }
-
-    if (redShiftWrapRef.current) {
-      gsap.to(redShiftWrapRef.current, {
+    if (activeRefs.shiftWrap) {
+      gsap.to(activeRefs.shiftWrap, {
         xPercent: 0,
         duration: 0.56,
         ease: 'power3.out',
@@ -290,11 +885,11 @@ export default function Wine() {
   // Phase 2: Section Heading ("I Nostri Vini")
   const titleP = stage(progress, 0.14, 0.5)
 
-  // Phase 3: Red card & Blue card containers
+  // Phase 3: Red and Blue ("Prossimamente") card containers
   const redCardP = stage(progress, 0.22, 0.62)
   const blueCardP = stage(progress, 0.34, 0.74)
 
-  // Phase 4: Inner elements of the Red card
+  // Phase 4: Inner elements of the wine card
   const wineNameP = stage(progress, 0.34, 0.66)
   const wineYearP = stage(progress, 0.4, 0.7)
   const innerTopLineP = stage(progress, 0.44, 0.76)
@@ -302,6 +897,365 @@ export default function Wine() {
   const innerLeftVertLineP = stage(progress, 0.42, 0.78)
   const innerMidVertLineP = stage(progress, 0.54, 0.84)
   const bottleP = stage(progress, 0.46, 0.86)
+  const priceP = stage(progress, 0.58, 0.9)
+  const buyBtnP = stage(progress, 0.52, 0.86)
+
+  // Shared renderer for the expanded wine card content + "I Dettagli" left-to-right overlay
+  const renderWineCardContent = (cardKey) => {
+    const isExpanded = activeCard === cardKey
+    const isComingSoon = cardKey === 'blue'
+    const innerRef =
+      cardKey === 'red' ? redInnerContentRef : blueInnerContentRef
+    const bottleRef =
+      cardKey === 'red' ? redBottleWrapRef : blueBottleWrapRef
+    const detailOverlayRef =
+      cardKey === 'red' ? redDetailOverlayRef : blueDetailOverlayRef
+    const detailEdgeRef =
+      cardKey === 'red' ? redDetailEdgeRef : blueDetailEdgeRef
+    const isDetailHovered = hoveredDetailCard === cardKey
+    const isDetailOpen = openDetails[cardKey]
+
+    const linesToRender = isComingSoon ? COMING_SOON_LINES : DESCRIPTION_LINES
+    const specsToRender = isComingSoon ? COMING_SOON_SPECS : WINE_SPECS
+    const bottleImgSrc = isComingSoon ? comingSoonBottleImg : merlotBottleImg
+    const bottleAltText = isComingSoon
+      ? 'Prossimo vino in arrivo'
+      : 'Bottiglia Il Merlot 2023'
+
+    return (
+      <div
+        ref={innerRef}
+        style={{
+          width: `${EXPANDED_WIDTH_PCT}cqw`,
+          opacity: innerOpacityRef.current[cardKey],
+          pointerEvents: isExpanded ? 'auto' : 'none',
+        }}
+        className="relative h-full shrink-0"
+      >
+        {/* Top Row: Wine Title ("Il Merlot" or "Prossimamente") */}
+        <h3
+          style={{
+            left: `${(20 / RED_CARD_W) * 100}%`,
+            top: `${(24 / RED_CARD_H) * 100}%`,
+            opacity: wineNameP,
+            transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
+          }}
+          className="absolute font-serif text-[clamp(20px,2.9vw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
+        >
+          {isComingSoon ? 'Prossimamente' : 'Il Merlot'}
+        </h3>
+
+        {/* Top Row: Year ("2023" on Red card, or "In Arrivo" badge on Coming Soon card) */}
+        {!isComingSoon && (
+          <span
+            style={{
+              left: `${(168 / RED_CARD_W) * 100}%`,
+              top: `${(31 / RED_CARD_H) * 100}%`,
+              opacity: wineYearP,
+              transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
+            }}
+            className="absolute font-serif text-[clamp(15px,2.05vw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
+          >
+            2023
+          </span>
+        )}
+
+        {/* Top Row: Horizontal line */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${((isComingSoon ? 286 : 242) / RED_CARD_W) * 100}%`,
+            top: `${(44 / RED_CARD_H) * 100}%`,
+            width: `${(((isComingSoon ? 497 : 497) - (isComingSoon ? 286 : 242)) / RED_CARD_W) * 100}%`,
+            transformOrigin: 'left center',
+            transform: `scaleX(${innerTopLineP})`,
+            opacity: innerTopLineP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute h-px bg-[#FFF9EE]/60"
+        />
+
+        {/* Top Row: "In Dettaglio >" trigger on Red card, or "In Cantina" label on Coming Soon card */}
+        {isComingSoon ? (
+          <span
+            style={{
+              left: `${(517 / RED_CARD_W) * 100}%`,
+              top: `${(36.5 / RED_CARD_H) * 100}%`,
+              opacity: detailLinkP,
+              transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
+            }}
+            className="absolute z-25 inline-flex items-center gap-[0.3em] font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE]/80 leading-none tracking-[0.02em]"
+          >
+            In Cantina
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              animateDetailsToggle(cardKey, true)
+            }}
+            onMouseEnter={() => setHoveredDetailCard(cardKey)}
+            onMouseLeave={() => setHoveredDetailCard(null)}
+            style={{
+              left: `${(517 / RED_CARD_W) * 100}%`,
+              top: `${(36.5 / RED_CARD_H) * 100}%`,
+              opacity: detailLinkP,
+              transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
+            }}
+            className="absolute z-25 inline-flex items-center gap-[0.3em] bg-transparent border-0 p-0 font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.02em] cursor-pointer"
+          >
+            <span>In Dettaglio</span>
+            <span
+              style={{
+                transform: isDetailHovered
+                  ? 'translateX(3px)'
+                  : 'translateX(0px)',
+                transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
+              className="inline-block font-normal"
+            >
+              &gt;
+            </span>
+          </button>
+        )}
+
+        {/* Left Vertical Line beside the description paragraph */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${(35.5 / RED_CARD_W) * 100}%`,
+            top: `${(81 / RED_CARD_H) * 100}%`,
+            height: `${((249 - 81) / RED_CARD_H) * 100}%`,
+            transformOrigin: 'center top',
+            transform: `scaleY(${innerLeftVertLineP})`,
+            opacity: innerLeftVertLineP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute w-px bg-[#FFF9EE]/55"
+        />
+
+        {/* Left Column: 8-line Serif Description Paragraph */}
+        <div
+          style={{
+            left: `${(56 / RED_CARD_W) * 100}%`,
+            top: `${(96 / RED_CARD_H) * 100}%`,
+            width: `${((365 - 56) / RED_CARD_W) * 100}%`,
+          }}
+          className="absolute font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
+        >
+          {linesToRender.map((line, idx) => {
+            const lineStart = 0.44 + idx * 0.032
+            const lineEnd = lineStart + 0.24
+            const lineP = stage(progress, lineStart, lineEnd)
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  opacity: lineP,
+                  transform: `translate3d(0, ${(1 - lineP) * 12}px, 0)`,
+                }}
+                className="whitespace-nowrap"
+              >
+                {line}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Middle Vertical Line between description and specs */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${(415 / RED_CARD_W) * 100}%`,
+            top: `${(144 / RED_CARD_H) * 100}%`,
+            height: `${((196 - 144) / RED_CARD_H) * 100}%`,
+            transformOrigin: 'center top',
+            transform: `scaleY(${innerMidVertLineP})`,
+            opacity: innerMidVertLineP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute w-px bg-[#FFF9EE]/55"
+        />
+
+        {/* Middle-Right Column: 3 Wine Spec Rows with custom SVG icons */}
+        {specsToRender.map((spec) => {
+          const specP = stage(progress, spec.start, spec.end)
+          return (
+            <div
+              key={spec.id}
+              style={{
+                left: `${(453 / RED_CARD_W) * 100}%`,
+                top: `${(spec.topPx / RED_CARD_H) * 100}%`,
+                opacity: specP,
+                transform: `translate3d(${(1 - specP) * 14}px, ${(1 - specP) * 8}px, 0)`,
+              }}
+              className="absolute flex items-center gap-[clamp(5px,0.6vw,10px)] whitespace-nowrap"
+            >
+              <img
+                src={spec.icon}
+                alt=""
+                aria-hidden="true"
+                className="h-[clamp(12px,1.35vw,21px)] w-[clamp(12px,1.35vw,21px)] shrink-0 object-contain"
+              />
+              <span className="font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-none tracking-[0.01em]">
+                {spec.label}
+              </span>
+            </div>
+          )
+        })}
+
+        {/* Right Column: Wine Bottle (Merlot bottle on Red card, pngwing.com(1).png silhouette on Coming Soon card) */}
+        <div
+          style={{
+            left: `${(669 / RED_CARD_W) * 100}%`,
+            top: `${(18 / RED_CARD_H) * 100}%`,
+            width: `${(100 / RED_CARD_W) * 100}%`,
+            height: `${(244 / RED_CARD_H) * 100}%`,
+            opacity: bottleP,
+            transform: `translate3d(${(1 - bottleP) * 18}px, ${(1 - bottleP) * 20}px, 0)`,
+          }}
+          className="pointer-events-none absolute z-20"
+        >
+          <div ref={bottleRef} className="h-full w-full will-change-transform">
+            <img
+              src={bottleImgSrc}
+              alt={bottleAltText}
+              className="h-full w-full object-contain select-none"
+              draggable={false}
+            />
+          </div>
+        </div>
+
+        {/* Price label directly under the bottle */}
+        <span
+          style={{
+            left: `${(719 / RED_CARD_W) * 100}%`,
+            top: `${(268 / RED_CARD_H) * 100}%`,
+            opacity: priceP,
+            transform: `translate3d(-50%, ${(1 - priceP) * 10}px, 0)`,
+          }}
+          className="pointer-events-none absolute z-20 font-serif italic text-[clamp(8px,0.92vw,14px)] font-normal text-[#FFF9EE]/75 leading-none tracking-[0.02em] whitespace-nowrap"
+        >
+          {isComingSoon ? 'prezzo: —' : 'prezzo: 24,00 €'}
+        </span>
+
+        {/* Vertical Left-to-Right "I Dettagli" Card Overlay */}
+        <div
+          ref={detailOverlayRef}
+          onClick={(e) => {
+            e.stopPropagation()
+            animateDetailsToggle(cardKey, false)
+          }}
+          style={{
+            clipPath: detailClipRef.current[cardKey],
+            pointerEvents: isDetailOpen ? 'auto' : 'none',
+          }}
+          className="absolute inset-0 z-30 bg-[#5A174F] cursor-pointer select-none overflow-hidden"
+          role="region"
+          aria-label="I Dettagli del vino"
+        >
+          {/* Centered Top Heading: "I Dettagli" */}
+          <h4
+            data-detail-item
+            style={{
+              left: '50%',
+              top: `${(16 / RED_CARD_H) * 100}%`,
+              transform: 'translateX(-50%)',
+            }}
+            className="absolute font-serif text-[clamp(18px,2.55vw,38px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
+          >
+            I Dettagli
+          </h4>
+
+          {/* 2x2 Category Blocks (Left & Middle Columns) */}
+          {DETAIL_CATEGORIES.map((item) => (
+            <div key={item.id}>
+              <div
+                data-detail-line
+                aria-hidden="true"
+                style={{
+                  left: `${(item.lineLeft / RED_CARD_W) * 100}%`,
+                  top: `${(item.lineTop / RED_CARD_H) * 100}%`,
+                  height: `${(item.lineHeight / RED_CARD_H) * 100}%`,
+                  transformOrigin: 'center top',
+                }}
+                className="pointer-events-none absolute w-px bg-[#BD9EAF]/75"
+              />
+              <span
+                data-detail-item
+                style={{
+                  left: `${(item.textLeft / RED_CARD_W) * 100}%`,
+                  top: `${(item.catTop / RED_CARD_H) * 100}%`,
+                }}
+                className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
+              >
+                {item.category}
+              </span>
+              <span
+                data-detail-item
+                style={{
+                  left: `${(item.textLeft / RED_CARD_W) * 100}%`,
+                  top: `${(item.valTop / RED_CARD_H) * 100}%`,
+                }}
+                className="absolute font-serif text-[clamp(9px,1.08vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
+              >
+                {item.value}
+              </span>
+            </div>
+          ))}
+
+          {/* Right Column: Tall Vertical Line + "VINIFICAZIONE" + 6-line Description */}
+          <div
+            data-detail-line
+            aria-hidden="true"
+            style={{
+              left: `${(530.6 / RED_CARD_W) * 100}%`,
+              top: `${(67.4 / RED_CARD_H) * 100}%`,
+              height: `${(167.9 / RED_CARD_H) * 100}%`,
+              transformOrigin: 'center top',
+            }}
+            className="pointer-events-none absolute w-px bg-[#BD9EAF]/75"
+          />
+
+          <span
+            data-detail-item
+            style={{
+              left: `${(543.4 / RED_CARD_W) * 100}%`,
+              top: `${(71 / RED_CARD_H) * 100}%`,
+            }}
+            className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
+          >
+            VINIFICAZIONE
+          </span>
+
+          <div
+            style={{
+              left: `${(538.3 / RED_CARD_W) * 100}%`,
+              top: `${(99 / RED_CARD_H) * 100}%`,
+            }}
+            className="absolute font-serif text-[clamp(9px,1.08vw,16px)] font-bold text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
+          >
+            {VINIFICAZIONE_LINES.map((line, idx) => (
+              <div
+                key={idx}
+                data-detail-item
+                className="whitespace-nowrap"
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Vertical sweeping edge highlight during left-to-right animation */}
+        <div
+          ref={detailEdgeRef}
+          aria-hidden="true"
+          style={{ left: '0%', opacity: 0 }}
+          className="pointer-events-none absolute top-0 bottom-0 z-40 w-[2px] bg-[#FFF9EE]/80 shadow-[0_0_12px_rgba(255,249,238,0.8)]"
+        />
+      </div>
+    )
+  }
 
   return (
     <section
@@ -310,7 +1264,10 @@ export default function Wine() {
       className="relative w-full min-h-dvh bg-[linear-gradient(180deg,#2E2828_0%,#252121_34%,#1D1919_68%,#141111_100%)] text-white select-none overflow-hidden"
     >
       {/* Uses the exact same max-w-[1440px] centered coordinate space as Company.jsx so the top vertical line aligns 1:1 */}
-      <div className="relative mx-auto w-full max-w-[1440px] min-h-dvh aspect-[1045/512]">
+      <div
+        style={{ containerType: 'inline-size' }}
+        className="relative mx-auto w-full max-w-[1440px] min-h-dvh aspect-[1045/512]"
+      >
         {/* 1A. Top vertical 1px white line aligned with Company.jsx's bottom vertical line (532.5 / 1257) */}
         <div
           aria-hidden="true"
@@ -353,16 +1310,18 @@ export default function Wine() {
           I Nostri Vini
         </h2>
 
-        {/* 3. Main Red Rectangle (#BB4732) with GSAP 3D Tilt Hover Animation */}
+        {/* 3. Red Card (#BB4732) - Expanded initially, squeezed on left when Blue ("Prossimamente") is active */}
         <div
           ref={redShiftWrapRef}
-          style={{
-            left: `${(56 / CANVAS_W) * 100}%`,
-            top: `${(108 / CANVAS_H) * 100}%`,
-            width: `${(RED_CARD_W / CANVAS_W) * 100}%`,
-            height: `${(RED_CARD_H / CANVAS_H) * 100}%`,
+          onClick={() => {
+            if (activeCard !== 'red') handleSelectCard('red')
           }}
-          className="absolute z-10"
+          onMouseEnter={() => handleNonActiveMouseEnter('red')}
+          onMouseLeave={() => handleNonActiveMouseLeave('red')}
+          className={`absolute ${activeCard === 'red' ? 'z-10' : 'z-20 cursor-pointer'} will-change-[width,height,left,top,transform]`}
+          role={activeCard !== 'red' ? 'button' : undefined}
+          tabIndex={activeCard !== 'red' ? 0 : undefined}
+          aria-label={activeCard !== 'red' ? 'Vino precedente' : undefined}
         >
           <div
             style={{
@@ -374,245 +1333,177 @@ export default function Wine() {
           >
             <div
               ref={redTiltCardRef}
-              onMouseMove={handleRedMouseMove}
-              onMouseLeave={handleRedMouseLeave}
+              onMouseMove={(e) => handleExpandedMouseMove(e, 'red')}
+              onMouseLeave={() => handleExpandedMouseLeave('red')}
               style={{
                 transformStyle: 'preserve-3d',
                 boxShadow: '0px 10px 26px rgba(0, 0, 0, 0.24)',
               }}
               className="relative h-full w-full rounded-[clamp(14px,1.85vw,26px)] border border-black/80 bg-[#BB4732] overflow-hidden will-change-transform"
             >
+              {/* Dark gradient overlay when Red card is squeezed */}
+              <div
+                ref={redSqueezedGradientRef}
+                aria-hidden="true"
+                style={{
+                  opacity: 0,
+                  background: RED_SQUEEZED_BG,
+                }}
+                className="pointer-events-none absolute inset-0 z-0 rounded-[inherit]"
+              />
+
               {/* Subtle cursor-following specular highlight overlay during tilt */}
               <div
-                ref={glareRef}
+                ref={redGlareRef}
                 aria-hidden="true"
                 style={{ opacity: 0 }}
                 className="pointer-events-none absolute inset-0 z-30 rounded-[inherit]"
               />
 
-              {/* Top Row: "Il Merlot" */}
-              <h3
-                style={{
-                  left: `${(20 / RED_CARD_W) * 100}%`,
-                  top: `${(24 / RED_CARD_H) * 100}%`,
-                  opacity: wineNameP,
-                  transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
-                }}
-                className="absolute font-serif text-[clamp(20px,2.9vw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em]"
-              >
-                Il Merlot
-              </h3>
+              {renderWineCardContent('red')}
 
-              {/* Top Row: "2023" */}
-              <span
-                style={{
-                  left: `${(168 / RED_CARD_W) * 100}%`,
-                  top: `${(31 / RED_CARD_H) * 100}%`,
-                  opacity: wineYearP,
-                  transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
-                }}
-                className="absolute font-serif text-[clamp(15px,2.05vw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
-              >
-                2023
-              </span>
-
-              {/* Top Row: Horizontal line between "2023" and "In Dettaglio >" */}
-              <div
-                aria-hidden="true"
-                style={{
-                  left: `${(242 / RED_CARD_W) * 100}%`,
-                  top: `${(44 / RED_CARD_H) * 100}%`,
-                  width: `${((497 - 242) / RED_CARD_W) * 100}%`,
-                  transformOrigin: 'left center',
-                  transform: `scaleX(${innerTopLineP})`,
-                  opacity: innerTopLineP > 0.005 ? 1 : 0,
-                }}
-                className="pointer-events-none absolute h-px bg-[#FFF9EE]/60"
-              />
-
-              {/* Top Row: "In Dettaglio >" */}
-              <a
-                href="#vini"
-                onClick={(e) => e.preventDefault()}
-                onMouseEnter={() => setIsDetailHovered(true)}
-                onMouseLeave={() => setIsDetailHovered(false)}
-                style={{
-                  left: `${(517 / RED_CARD_W) * 100}%`,
-                  top: `${(36.5 / RED_CARD_H) * 100}%`,
-                  opacity: detailLinkP,
-                  transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
-                }}
-                className="absolute inline-flex items-center gap-[0.3em] font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.02em] cursor-pointer"
-              >
-                <span>In Dettaglio</span>
-                <span
-                  style={{
-                    transform: isDetailHovered
-                      ? 'translateX(3px)'
-                      : 'translateX(0px)',
-                    transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
-                  }}
-                  className="inline-block font-normal"
+              {/* Mirrored Big #FFF9EE arrow revealed when Red card is squeezed on the left and hovered */}
+              <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center">
+                <svg
+                  ref={redArrowRef}
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  className="pointer-events-none h-[clamp(36px,4.8vw,74px)] w-[clamp(36px,4.8vw,74px)] shrink-0"
                 >
-                  &gt;
-                </span>
-              </a>
-
-              {/* Left Vertical Line beside the description paragraph */}
-              <div
-                aria-hidden="true"
-                style={{
-                  left: `${(35.5 / RED_CARD_W) * 100}%`,
-                  top: `${(81 / RED_CARD_H) * 100}%`,
-                  height: `${((249 - 81) / RED_CARD_H) * 100}%`,
-                  transformOrigin: 'center top',
-                  transform: `scaleY(${innerLeftVertLineP})`,
-                  opacity: innerLeftVertLineP > 0.005 ? 1 : 0,
-                }}
-                className="pointer-events-none absolute w-px bg-[#FFF9EE]/55"
-              />
-
-              {/* Left Column: 8-line Serif Description Paragraph */}
-              <div
-                style={{
-                  left: `${(56 / RED_CARD_W) * 100}%`,
-                  top: `${(96 / RED_CARD_H) * 100}%`,
-                  width: `${((365 - 56) / RED_CARD_W) * 100}%`,
-                }}
-                className="absolute font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
-              >
-                {DESCRIPTION_LINES.map((line, idx) => {
-                  const lineStart = 0.44 + idx * 0.032
-                  const lineEnd = lineStart + 0.24
-                  const lineP = stage(progress, lineStart, lineEnd)
-
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        opacity: lineP,
-                        transform: `translate3d(0, ${(1 - lineP) * 12}px, 0)`,
-                      }}
-                      className="whitespace-nowrap"
-                    >
-                      {line}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Middle Vertical Line between description and specs */}
-              <div
-                aria-hidden="true"
-                style={{
-                  left: `${(415 / RED_CARD_W) * 100}%`,
-                  top: `${(144 / RED_CARD_H) * 100}%`,
-                  height: `${((196 - 144) / RED_CARD_H) * 100}%`,
-                  transformOrigin: 'center top',
-                  transform: `scaleY(${innerMidVertLineP})`,
-                  opacity: innerMidVertLineP > 0.005 ? 1 : 0,
-                }}
-                className="pointer-events-none absolute w-px bg-[#FFF9EE]/55"
-              />
-
-              {/* Middle-Right Column: 3 Wine Spec Rows with custom SVG icons */}
-              {WINE_SPECS.map((spec) => {
-                const specP = stage(progress, spec.start, spec.end)
-                return (
-                  <div
-                    key={spec.id}
-                    style={{
-                      left: `${(453 / RED_CARD_W) * 100}%`,
-                      top: `${(spec.topPx / RED_CARD_H) * 100}%`,
-                      opacity: specP,
-                      transform: `translate3d(${(1 - specP) * 14}px, ${(1 - specP) * 8}px, 0)`,
-                    }}
-                    className="absolute flex items-center gap-[clamp(5px,0.6vw,10px)] whitespace-nowrap"
-                  >
-                    <img
-                      src={spec.icon}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-[clamp(12px,1.35vw,21px)] w-[clamp(12px,1.35vw,21px)] shrink-0 object-contain"
-                    />
-                    <span className="font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-none tracking-[0.01em]">
-                      {spec.label}
-                    </span>
-                  </div>
-                )
-              })}
-
-              {/* Right Column: Wine Bottle + Soft Floor Shadow */}
-              <div
-                style={{
-                  left: `${(669 / RED_CARD_W) * 100}%`,
-                  top: `${(24 / RED_CARD_H) * 100}%`,
-                  width: `${(100 / RED_CARD_W) * 100}%`,
-                  height: `${(257 / RED_CARD_H) * 100}%`,
-                  opacity: bottleP,
-                  transform: `translate3d(${(1 - bottleP) * 18}px, ${(1 - bottleP) * 20}px, 0)`,
-                }}
-                className="pointer-events-none absolute z-20"
-              >
-                <div
-                  ref={bottleWrapRef}
-                  className="h-full w-full will-change-transform"
-                >
-                  <img
-                    src={merlotBottleImg}
-                    alt="Bottiglia Il Merlot 2023"
-                    className="h-full w-full object-contain select-none"
-                    draggable={false}
+                  <path
+                    d="M52 32H14M14 32L31 15M14 32L31 49"
+                    stroke="#FFF9EE"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                </div>
+                </svg>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 4. Right Blue Rectangle with GSAP Width-Amplifying Hover Animation + Big #FFF9EE Arrow */}
+        {/* 4. Blue ("Prossimamente" / Coming Soon) Card (#1B6091) - Squeezed on right initially, expands on click */}
         <div
-          ref={blueCardRef}
-          onMouseEnter={handleBlueMouseEnter}
-          onMouseLeave={handleBlueMouseLeave}
-          style={{
-            right: `${BASE_BLUE_RIGHT_PCT}%`,
-            top: `${(106 / CANVAS_H) * 100}%`,
-            width: `${BASE_BLUE_WIDTH_PCT}%`,
-            height: `${((404 - 106) / CANVAS_H) * 100}%`,
-            opacity: blueCardP,
-            transform: `translate3d(${(1 - blueCardP) * 28}px, ${(1 - blueCardP) * 16}px, 0)`,
-            background:
-              'linear-gradient(90deg, #1B6091 0%, #164C73 35%, #10344E 70%, #092132 100%)',
-            boxShadow: '0 8px 22px rgba(0, 0, 0, 0.24)',
+          ref={blueShiftWrapRef}
+          onClick={() => {
+            if (activeCard !== 'blue') handleSelectCard('blue')
           }}
-          className="absolute z-20 flex items-center justify-center cursor-pointer rounded-[clamp(14px,1.85vw,26px)] border-[clamp(2px,0.26vw,3.5px)] border-[#0C8CE9] overflow-hidden will-change-[width,right,transform]"
-          role="button"
-          tabIndex={0}
-          aria-label="Prossimo vino"
+          onMouseEnter={() => handleNonActiveMouseEnter('blue')}
+          onMouseLeave={() => handleNonActiveMouseLeave('blue')}
+          className={`absolute ${activeCard === 'blue' ? 'z-10' : 'z-20 cursor-pointer'} will-change-[width,height,left,top,transform]`}
+          role={activeCard !== 'blue' ? 'button' : undefined}
+          tabIndex={activeCard !== 'blue' ? 0 : undefined}
+          aria-label={
+            activeCard !== 'blue' ? 'Prossimo vino in arrivo' : undefined
+          }
         >
-          {/* Big #FFF9EE arrow revealed on hover */}
+          <div
+            style={{
+              opacity: blueCardP,
+              transform: `translate3d(${(1 - blueCardP) * 28}px, ${(1 - blueCardP) * 16}px, 0)`,
+              perspective: '1100px',
+            }}
+            className="h-full w-full"
+          >
+            <div
+              ref={blueTiltCardRef}
+              onMouseMove={(e) => handleExpandedMouseMove(e, 'blue')}
+              onMouseLeave={() => handleExpandedMouseLeave('blue')}
+              style={{
+                transformStyle: 'preserve-3d',
+                boxShadow: '0 8px 22px rgba(0, 0, 0, 0.24)',
+              }}
+              className="relative h-full w-full rounded-[clamp(14px,1.85vw,26px)] border-[clamp(2px,0.26vw,3.5px)] border-[#0C8CE9] bg-[#1B6091] overflow-hidden will-change-transform"
+            >
+              {/* Dark gradient overlay when Blue card is squeezed */}
+              <div
+                ref={blueSqueezedGradientRef}
+                aria-hidden="true"
+                style={{
+                  opacity: 1,
+                  background: BLUE_SQUEEZED_BG,
+                }}
+                className="pointer-events-none absolute inset-0 z-0 rounded-[inherit]"
+              />
+
+              {/* Subtle cursor-following specular highlight overlay during tilt */}
+              <div
+                ref={blueGlareRef}
+                aria-hidden="true"
+                style={{ opacity: 0 }}
+                className="pointer-events-none absolute inset-0 z-30 rounded-[inherit]"
+              />
+
+              {renderWineCardContent('blue')}
+
+              {/* Big #FFF9EE arrow revealed when Blue card is squeezed on the right and hovered */}
+              <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center">
+                <svg
+                  ref={blueArrowRef}
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  className="pointer-events-none h-[clamp(36px,4.8vw,74px)] w-[clamp(36px,4.8vw,74px)] shrink-0"
+                >
+                  <path
+                    d="M12 32H50M50 32L33 15M50 32L33 49"
+                    stroke="#FFF9EE"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4B. "Acquista" Pill Button below the bottom-left of the wine card */}
+        <button
+          type="button"
+          disabled={activeCard === 'blue'}
+          style={{
+            left: `${BASE_RED_LEFT_PCT}%`,
+            top: `${(424 / CANVAS_H) * 100}%`,
+            width: `${(134 / CANVAS_W) * 100}%`,
+            height: `${(52 / CANVAS_H) * 100}%`,
+            opacity: buyBtnP * (activeCard === 'blue' ? 0.5 : 1),
+            transform: `translate3d(0, ${(1 - buyBtnP) * 18}px, 0)`,
+          }}
+          className={`absolute z-20 flex items-center justify-center gap-[clamp(6px,0.7vw,11px)] rounded-[clamp(10px,1.2vw,16px)] border-0 bg-[#FFF9EE] text-[#1D1919] shadow-[0_6px_18px_rgba(0,0,0,0.25)] transition-all duration-300 ${
+            activeCard === 'blue'
+              ? 'cursor-not-allowed'
+              : 'cursor-pointer hover:scale-[1.03] hover:bg-white active:scale-[0.98]'
+          }`}
+        >
           <svg
-            ref={blueArrowRef}
-            viewBox="0 0 64 64"
+            viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
-            style={{
-              opacity: 0,
-              transform: 'translateX(-16px) scale(0.78)',
-            }}
-            className="pointer-events-none h-[clamp(36px,4.8vw,74px)] w-[clamp(36px,4.8vw,74px)] shrink-0"
+            className="h-[clamp(13px,1.35vw,19px)] w-[clamp(13px,1.35vw,19px)] shrink-0"
           >
             <path
-              d="M12 32H50M50 32L33 15M50 32L33 49"
-              stroke="#FFF9EE"
-              strokeWidth="4.5"
-              strokeLinecap="round"
+              d="M6 7.5H18L19 20.5H5L6 7.5Z"
+              stroke="currentColor"
+              strokeWidth="1.9"
               strokeLinejoin="round"
             />
+            <path
+              d="M9 7.5V6C9 4.34315 10.3431 3 12 3C13.6569 3 15 4.34315 15 6V7.5"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+            />
           </svg>
-        </div>
+          <span className="font-sans text-[clamp(10px,1.12vw,16px)] font-bold leading-none tracking-[0.01em]">
+            Acquista
+          </span>
+        </button>
 
         {/* 5A. Bottom-right horizontal 1px white line extending all the way to the right edge of the webpage */}
         <div
