@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../../i18n/useLanguage'
 
 const MENU_ITEMS = [
-  { id: 'contattaci', label: 'Contattaci', href: '#contattaci' },
-  { id: 'vini', label: 'Vini', href: '#vini' },
-  { id: 'territorio', label: 'Territorio', href: '#territorio' },
-  { id: 'azienda', label: 'Azienda', href: '#azienda' },
+  { id: 'contattaci', href: '#contattaci' },
+  { id: 'vini', href: '#vini' },
+  { id: 'territorio', href: '#territorio' },
+  { id: 'azienda', href: '#azienda' },
 ]
 
 // 4 fixed angular slots (in degrees) surrounding the outer red circle:
@@ -19,6 +20,7 @@ function easeInOutCubic(t) {
 }
 
 export default function MenuWheel({ onNavigate, isLoaded = true }) {
+  const { t } = useLanguage()
   // itemSlots[i] holds which slot (0..3) MENU_ITEMS[i] currently occupies.
   // Initially: Contattaci=0, Vini=1, Territorio=2 (Center, white), Azienda=3
   const [itemSlots, setItemSlots] = useState([0, 1, 2, 3])
@@ -135,7 +137,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
   return (
     <div
       className="pointer-events-none absolute right-0 top-[54%] -translate-y-1/2 z-20 h-0 w-0 select-none"
-      aria-label="Navigation wheel"
+      aria-label={t.menuWheel.ariaLabel}
     >
       {/* Shared coordinate origin aligned vertically in line with the Hero text */}
       <div className="relative h-0 w-0">
@@ -176,6 +178,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
           const isCenter = activeCenterId === item.id
           const isHovered = hoveredId === item.id
           const isHighlighted = isCenter || isHovered
+          const label = t.menuWheel.items[item.id] ?? item.id
 
           // Stagger after left-side texts (which run at 750ms..1170ms):
           // Contattaci (1310ms) -> Vini (1450ms) -> Territorio (1590ms) -> Azienda (1730ms)
@@ -212,7 +215,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
                       : 'text-[#6A717A]/85'
                   }`}
                 >
-                  {item.label}
+                  {label}
                 </a>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../i18n/useLanguage'
 
 // Exact geometry measured from the reference logo (280x280 coordinate space):
 // Three eccentric rings of 12px stroke width converging at the bottom.
@@ -46,6 +47,7 @@ export default function LoadingScreen({
   onStartExit,
   onComplete,
 }) {
+  const { t } = useLanguage()
   const [progress, setProgress] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
   const [isUnmounted, setIsUnmounted] = useState(false)
@@ -101,7 +103,7 @@ export default function LoadingScreen({
     <div
       role="status"
       aria-live="polite"
-      aria-label="Caricamento in corso"
+      aria-label={t.loading.ariaLabel}
       style={{
         opacity: isExiting ? 0 : 1,
         transform: isExiting ? 'scale(1.02)' : 'scale(1)',
@@ -158,7 +160,7 @@ export default function LoadingScreen({
 
       {/* Caption below the logo */}
       <p className="mt-[clamp(24px,3.2vw,38px)] mb-0 font-mono text-[clamp(13px,1.35vw,17px)] font-normal text-[#1E1B18] tracking-[0.02em]">
-        giusto qualche secondo...
+        {t.loading.caption}
       </p>
     </div>
   )

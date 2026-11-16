@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../i18n/useLanguage'
 
 const CANVAS_W = 1045
 const CANVAS_H = 190
@@ -21,6 +22,7 @@ function stage(progress, start, end) {
 }
 
 export default function Footer() {
+  const { t } = useLanguage()
   const footerRef = useRef(null)
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
@@ -93,6 +95,7 @@ export default function Footer() {
   return (
     <footer
       ref={footerRef}
+      id="contattaci"
       className="relative w-full bg-[linear-gradient(180deg,#141111_0%,#241B19_32%,#3A2622_68%,#4A2F29_100%)] text-[#FFF9EE] select-none overflow-hidden"
     >
       <div className="relative mx-auto w-full max-w-[1440px] aspect-[1045/190]">
@@ -150,13 +153,13 @@ export default function Footer() {
             className="ml-[clamp(8px,0.9vw,14px)] flex flex-col justify-between h-full py-[1px] font-serif"
           >
             <span className="text-[clamp(9px,1.02vw,15px)] font-bold uppercase tracking-[0.04em] text-[#B8ABA6] leading-none">
-              TENUTA
+              {t.footer.estateHeader}
             </span>
             <p className="m-0 text-[clamp(10px,1.15vw,17px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em] whitespace-nowrap">
               La Glia | Via Magrete 12
             </p>
             <p className="m-0 text-[clamp(10px,1.15vw,17px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em] whitespace-nowrap">
-              52014 Poppi AR - Italia
+              {t.footer.countryLine}
             </p>
           </div>
         </div>
@@ -187,7 +190,7 @@ export default function Footer() {
             className="ml-[clamp(8px,0.9vw,14px)] flex flex-col justify-between h-full py-[1px] font-serif select-text"
           >
             <span className="text-[clamp(9px,1.02vw,15px)] font-bold uppercase tracking-[0.04em] text-[#B8ABA6] leading-none select-none">
-              CONTATTI
+              {t.footer.contactsHeader}
             </span>
             <a
               href="mailto:info@laglia.com"

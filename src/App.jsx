@@ -6,6 +6,7 @@ import Wine from './components/Wine'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 import LoadingScreen from './components/LoadingScreen'
+import { LanguageProvider } from './i18n/LanguageContext'
 import './App.css'
 
 function App() {
@@ -26,15 +27,17 @@ function App() {
   }, [])
 
   return (
-    <main className="bg-[#0A0A0A]">
-      <LoadingScreen onStartExit={() => setIsHeroReady(true)} />
-      <Hero isReady={isHeroReady} />
-      <Terroir />
-      <Company />
-      <Wine />
-      <Footer />
-      <ScrollToTop />
-    </main>
+    <LanguageProvider defaultLanguage="it">
+      <main className="bg-[#0A0A0A]">
+        <LoadingScreen onStartExit={() => setIsHeroReady(true)} />
+        <Hero isReady={isHeroReady} />
+        <Terroir />
+        <Company />
+        <Wine />
+        <Footer />
+        <ScrollToTop />
+      </main>
+    </LanguageProvider>
   )
 }
 

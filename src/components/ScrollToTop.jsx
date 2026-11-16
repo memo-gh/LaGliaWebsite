@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useLanguage } from '../i18n/useLanguage'
 
 export default function ScrollToTop() {
+  const { t } = useLanguage()
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -45,8 +47,8 @@ export default function ScrollToTop() {
     <button
       type="button"
       onClick={handleScrollToTop}
-      aria-label="Back to top"
-      title="Torna su"
+      aria-label={t.scrollToTop.label}
+      title={t.scrollToTop.label}
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible

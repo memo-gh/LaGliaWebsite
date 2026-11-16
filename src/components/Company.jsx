@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import vineyardImg from '../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
+import { useLanguage } from '../i18n/useLanguage'
 
 const CANVAS_W = 1257
 const CANVAS_H = 639
@@ -43,10 +44,10 @@ const DEFAULT_QUOTE_LINES = [
   'London,',
 ]
 
-// Series of vineyard slides for the continuous horizontal slideshow.
+// Series of vineyard slides for the continuous vertical slideshow.
 // Each slide has its own focal framing, Ken Burns zoom/pan animation,
-// a tiny one-line "Lorem ipsum" description, and a replacement Lorem Ipsum
-// text passage that animates into the left quote block when the image is clicked.
+// a tiny one-line "Lorem ipsum" description, and a corresponding text card
+// in the stacked deck on the left column.
 const SLIDES = [
   {
     id: 'slide-1',
@@ -55,20 +56,7 @@ const SLIDES = [
     caption: 'Lorem ipsum',
     objectPosition: '50% 50%',
     kbAnimation: 'kbDrift1 16s ease-in-out infinite alternate',
-    quoteLines: [
-      'Lorem ipsum dolor sit',
-      'amet, consectetur',
-      'adipiscing elit, sed do',
-      'eiusmod tempor',
-      'incididunt ut labore et',
-      'dolore magna aliqua.',
-      'Ut enim ad minim',
-      'veniam, quis nostrud',
-      'exercitation ullamco',
-      'laboris nisi ut aliquip',
-      'ex ea commodo',
-      'consequat.',
-    ],
+    quoteLines: DEFAULT_QUOTE_LINES,
   },
   {
     id: 'slide-2',
@@ -138,7 +126,10 @@ const SLIDES = [
   },
 ]
 
+const CAROUSEL_JUMP_DELAY_MS = 420
+
 export default function Company() {
+  const { t } = useLanguage()
   const sectionRef = useRef(null)
   const viewportRef = useRef(null)
   const trackRef = useRef(null)
@@ -161,44 +152,25 @@ export default function Company() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const [hoveredCardKey, setHoveredCardKey] = useState(null)
   const [hoveredSlideIndex, setHoveredSlideIndex] = useState(null)
-  const [selectedSlideId, setSelectedSlideId] = useState(null)
 
-  // Animated text replacement state for the left quote column
-  const [displayedLines, setDisplayedLines] = useState(DEFAULT_QUOTE_LINES)
-  const [textPhase, setTextPhase] = useState('visible') // 'exiting' | 'entering' | 'visible'
-  const textSwapTimeoutRef = useRef(null)
-  const textEnterRafRef = useRef(null)
+  // Active stacked text card index & debounced carousel jump timer
+  const [activeCardIndex, setActiveCardIndex] = useState(0)
+  const activeCardIndexRef = useRef(0)
+  const carouselJumpTimerRef = useRef(null)
+  const holdAfterJumpUntilRef = useRef(0)
 
   useEffect(() => {
     return () => {
-      if (textSwapTimeoutRef.current) clearTimeout(textSwapTimeoutRef.current)
-      if (textEnterRafRef.current) cancelAnimationFrame(textEnterRafRef.current)
+      if (carouselJumpTimerRef.current) {
+        clearTimeout(carouselJumpTimerRef.current)
+      }
       if (slideshowDelayTimerRef.current) {
         clearTimeout(slideshowDelayTimerRef.current)
       }
     }
   }, [])
 
-  const triggerTextReplacement = (nextLines, nextSlideId) => {
-    if (textSwapTimeoutRef.current) clearTimeout(textSwapTimeoutRef.current)
-    if (textEnterRafRef.current) cancelAnimationFrame(textEnterRafRef.current)
-
-    setSelectedSlideId(nextSlideId)
-    setTextPhase('exiting')
-
-    textSwapTimeoutRef.current = setTimeout(() => {
-      setDisplayedLines(nextLines)
-      setTextPhase('entering')
-
-      textEnterRafRef.current = requestAnimationFrame(() => {
-        textEnterRafRef.current = requestAnimationFrame(() => {
-          setTextPhase('visible')
-        })
-      })
-    }, 230)
-  }
-
-  // Smoothly glides the clicked card to the vertical center of the slideshow viewport
+  // Smoothly glides the target photo card to the vertical center of the slideshow viewport
   const centerCardInViewport = (cardIndexInTrack, slideIdx) => {
     const viewportEl = viewportRef.current
     const trackEl = trackRef.current
@@ -222,28 +194,54 @@ export default function Company() {
       delta -= halfHeight
     }
 
+    const duration = 620
     centeringAnimRef.current = {
       startOffset: currentOffset,
       delta,
       startTime: performance.now(),
-      duration: 620,
+      duration,
     }
+    holdAfterJumpUntilRef.current = performance.now() + duration + 2200
     speedFactorRef.current = 0
     setActiveSlideIndex(slideIdx)
   }
 
-  const handleSlideClick = (slide, cardIndexInTrack, slideIdx) => {
-    centerCardInViewport(cardIndexInTrack, slideIdx)
-    if (selectedSlideId === slide.id) {
-      triggerTextReplacement(DEFAULT_QUOTE_LINES, null)
-    } else {
-      triggerTextReplacement(slide.quoteLines, slide.id)
+  // Switches the front text card immediately, and after a tiny resettable delay
+  // jumps the image carousel to the corresponding photo.
+  const handleCardArrowSwitch = (direction) => {
+    const nextIndex =
+      (activeCardIndexRef.current + direction + SLIDES.length) % SLIDES.length
+    activeCardIndexRef.current = nextIndex
+    setActiveCardIndex(nextIndex)
+
+    if (carouselJumpTimerRef.current) {
+      clearTimeout(carouselJumpTimerRef.current)
     }
+
+    carouselJumpTimerRef.current = setTimeout(() => {
+      carouselJumpTimerRef.current = null
+      centerCardInViewport(nextIndex, nextIndex)
+    }, CAROUSEL_JUMP_DELAY_MS)
+  }
+
+  const handleSlideClick = (slide, cardIndexInTrack, slideIdx) => {
+    if (carouselJumpTimerRef.current) {
+      clearTimeout(carouselJumpTimerRef.current)
+      carouselJumpTimerRef.current = null
+    }
+    activeCardIndexRef.current = slideIdx
+    setActiveCardIndex(slideIdx)
+    centerCardInViewport(cardIndexInTrack, slideIdx)
   }
 
   const handleCounterClick = (slide, index) => {
+    if (carouselJumpTimerRef.current) {
+      clearTimeout(carouselJumpTimerRef.current)
+      carouselJumpTimerRef.current = null
+    }
+    activeCardIndexRef.current = index
+    setActiveCardIndex(index)
     centerCardInViewport(index, index)
-    triggerTextReplacement(slide.quoteLines, slide.id)
   }
 
   useEffect(() => {
@@ -340,7 +338,11 @@ export default function Company() {
               centeringAnimRef.current = null
             }
           } else if (isSlideshowReadyRef.current) {
-            const targetSpeedFactor = isTrackPausedRef.current ? 0 : 1
+            const isHoldingOrPendingJump =
+              carouselJumpTimerRef.current !== null ||
+              now < holdAfterJumpUntilRef.current
+            const targetSpeedFactor =
+              isTrackPausedRef.current || isHoldingOrPendingJump ? 0 : 1
             speedFactorRef.current +=
               (targetSpeedFactor - speedFactorRef.current) *
               Math.min(1, dt * 0.012)
@@ -394,11 +396,12 @@ export default function Company() {
   const titleP = stage(progress, 0.12, 0.52)
   const subtitleP = stage(progress, 0.3, 0.64)
 
-  // Phase 3: Quote marks & staggered body text lines
+  // Phase 3: Stacked semi-transparent dark quote cards
+  const cardStackP = stage(progress, 0.32, 0.76)
   const openQuoteP = stage(progress, 0.34, 0.6)
   const closeQuoteP = stage(progress, 0.72, 0.96)
 
-  // Phase 4: Right-side Ken Burns horizontal slideshow + rectangle counter
+  // Phase 4: Right-side Ken Burns vertical slideshow + rectangle counter
   const slideshowP = stage(progress, 0.4, 0.84)
 
   const loopedSlides = [...SLIDES, ...SLIDES]
@@ -515,7 +518,7 @@ export default function Company() {
           }}
           className="absolute font-serif text-[clamp(22px,3.6vw,50px)] font-bold text-white leading-none tracking-[0.005em]"
         >
-          L’Azienda
+          {t.company.title}
         </h2>
 
         {/* 5. Header Subtitle: "E i l suo team" aligned to the right end of the horizontal line */}
@@ -530,100 +533,162 @@ export default function Company() {
           className="absolute flex justify-end"
         >
           <span className="font-serif text-[clamp(10px,1.08vw,15px)] font-normal text-[#BB4732] tracking-[0.05em] leading-none">
-            E i l suo team
+            {t.company.subtitle}
           </span>
         </div>
 
-        {/* 6. Left Column: Opening Quote Mark “ */}
-        <span
-          aria-hidden="true"
-          style={{
-            left: `${(68 / CANVAS_W) * 100}%`,
-            top: `${(182 / CANVAS_H) * 100}%`,
-            opacity: openQuoteP,
-            transform:
-              textPhase === 'exiting'
-                ? 'translate3d(-4px, -4px, 0) scale(0.92)'
-                : `translate3d(0, ${(1 - openQuoteP) * 14}px, 0) scale(1)`,
-            transition: 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-          className="pointer-events-none absolute font-serif text-[clamp(24px,3.2vw,44px)] font-bold leading-none text-[#C74337]"
-        >
-          &ldquo;
-        </span>
-
-        {/* 7. Left Column: Staggered 12-line Serif Body Text (replaces with animation when an image is clicked) */}
+        {/* 6. Left Column: Stacked Semi-Transparent Dark Cards with Bottom-Right Switch Arrows */}
         <div
           aria-live="polite"
           style={{
-            left: `${(111 / CANVAS_W) * 100}%`,
-            top: `${(211 / CANVAS_H) * 100}%`,
-            width: `${((430 - 111) / CANVAS_W) * 100}%`,
+            left: `${(68 / CANVAS_W) * 100}%`,
+            top: `${(168 / CANVAS_H) * 100}%`,
+            width: `${((440 - 68) / CANVAS_W) * 100}%`,
+            height: `${((576 - 168) / CANVAS_H) * 100}%`,
+            opacity: cardStackP,
+            transform: `translate3d(${(1 - cardStackP) * -22}px, ${(1 - cardStackP) * 18}px, 0)`,
           }}
-          className="absolute font-serif text-[clamp(11px,1.58vw,22px)] font-normal text-white/95 leading-[1.46] tracking-[0.025em]"
+          className="absolute"
         >
-          {displayedLines.map((line, index) => {
-            const lineStart = 0.36 + index * 0.03
-            const lineEnd = lineStart + 0.24
-            const scrollLineP = stage(progress, lineStart, lineEnd)
+          {SLIDES.map((slide, cardIdx) => {
+            const stackDepth =
+              (cardIdx - activeCardIndex + SLIDES.length) % SLIDES.length
+            const isFront = stackDepth === 0
 
-            let swapOpacity = 1
-            let swapOffsetX = 0
-            let swapOffsetY = 0
-            let swapBlur = 0
-
-            if (textPhase === 'exiting') {
-              swapOpacity = 0
-              swapOffsetX = -12
-              swapOffsetY = -8
-              swapBlur = 2.5
-            } else if (textPhase === 'entering') {
-              swapOpacity = 0
-              swapOffsetX = 14
-              swapOffsetY = 10
-              swapBlur = 2.5
-            }
-
-            const delayMs =
-              textPhase === 'exiting' ? index * 10 : index * 22
+            const offsetX = stackDepth * 11
+            const offsetY = stackDepth * 10
+            const scale = 1 - stackDepth * 0.032
+            const cardBgAlpha = isFront
+              ? 0.42
+              : Math.max(0.18, 0.34 - stackDepth * 0.06)
+            const borderAlpha = isFront
+              ? 0.22
+              : Math.max(0.09, 0.16 - stackDepth * 0.025)
 
             return (
-              <div
-                key={index}
+              <article
+                key={slide.id}
+                aria-hidden={!isFront}
                 style={{
-                  opacity: scrollLineP * swapOpacity,
-                  transform: `translate3d(${swapOffsetX}px, ${(1 - scrollLineP) * 14 + swapOffsetY}px, 0)`,
-                  filter: swapBlur > 0 ? `blur(${swapBlur}px)` : 'none',
+                  zIndex: 30 - stackDepth,
+                  transform: `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scale})`,
+                  transformOrigin: 'bottom right',
+                  backgroundColor: `rgba(38, 34, 30, ${cardBgAlpha})`,
+                  borderColor: `rgba(255, 255, 255, ${borderAlpha})`,
+                  boxShadow: isFront
+                    ? '0 14px 32px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
+                    : '0 8px 18px rgba(0, 0, 0, 0.16)',
                   transition:
-                    textPhase === 'entering'
-                      ? 'none'
-                      : `opacity 260ms cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms, transform 300ms cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms, filter 260ms ease ${delayMs}ms`,
+                    'transform 460ms cubic-bezier(0.22, 1, 0.36, 1), background-color 420ms ease, border-color 420ms ease, box-shadow 420ms ease, opacity 420ms ease',
                 }}
-                className="whitespace-nowrap"
+                className={`
+                  absolute inset-0 flex flex-col justify-between overflow-hidden
+                  rounded-[clamp(14px,1.5vw,22px)] border backdrop-blur-md
+                  px-[clamp(14px,1.6vw,22px)] py-[clamp(10px,1.2vw,16px)]
+                  ${isFront ? 'pointer-events-auto' : 'pointer-events-none'}
+                `}
               >
-                {line}
-              </div>
+                {/* Opening Quote Mark “ */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    opacity: isFront ? openQuoteP : 0.22,
+                    transform: `translate3d(0, ${(1 - openQuoteP) * 10}px, 0)`,
+                    transition: 'opacity 320ms ease, transform 320ms ease',
+                  }}
+                  className="-mb-[clamp(6px,0.7vw,10px)] pointer-events-none select-none font-serif text-[clamp(20px,2.5vw,34px)] font-bold leading-none text-[#C74337]"
+                >
+                  &ldquo;
+                </span>
+
+                {/* 12-line Serif Body Text sized to fill the card cleanly */}
+                <div
+                  style={{
+                    opacity: isFront ? 1 : 0.18,
+                    filter: isFront ? 'blur(0px)' : 'blur(1.5px)',
+                    transition: 'opacity 340ms ease, filter 340ms ease',
+                  }}
+                  className="my-auto pl-[clamp(8px,1vw,14px)] font-serif text-[clamp(11px,1.5vw,20.5px)] font-normal text-white/95 leading-[1.33] tracking-[0.025em]"
+                >
+                  {slide.quoteLines.map((line, index) => {
+                    const lineStart = 0.36 + index * 0.028
+                    const lineEnd = lineStart + 0.24
+                    const scrollLineP = stage(progress, lineStart, lineEnd)
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          opacity: scrollLineP,
+                          transform: `translate3d(0, ${(1 - scrollLineP) * 12}px, 0)`,
+                        }}
+                        className="whitespace-nowrap"
+                      >
+                        {line}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Closing Quote Mark ” */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    opacity: isFront ? closeQuoteP : 0.2,
+                    transform: `translate3d(0, ${(1 - closeQuoteP) * 10}px, 0)`,
+                    transition: 'opacity 320ms ease, transform 320ms ease',
+                  }}
+                  className="-mt-[clamp(6px,0.7vw,10px)] pointer-events-none ml-[clamp(120px,14vw,190px)] select-none font-serif text-[clamp(20px,2.5vw,34px)] font-bold leading-none text-[#C74337]"
+                >
+                  &rdquo;
+                </span>
+
+                {/* Bottom-Right Card Switch Arrows pinned cleanly inside the card corner */}
+                {isFront && (
+                  <div className="absolute bottom-[clamp(10px,1.15vw,16px)] right-[clamp(12px,1.35vw,18px)] flex items-center gap-[clamp(4px,0.45vw,7px)]">
+                    <button
+                      type="button"
+                      aria-label={t.company.prevCardAria}
+                      onClick={() => handleCardArrowSwitch(-1)}
+                      className="group flex h-[clamp(20px,1.85vw,26px)] w-[clamp(20px,1.85vw,26px)] cursor-pointer items-center justify-center rounded-[clamp(5px,0.55vw,8px)] border border-white/25 bg-white/10 text-white/85 transition-colors duration-200 hover:border-[#BB4732] hover:bg-[#BB4732]/30 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-[58%] w-[58%] transition-transform duration-200 group-hover:-translate-x-0.5"
+                      >
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label={t.company.nextCardAria}
+                      onClick={() => handleCardArrowSwitch(1)}
+                      className="group flex h-[clamp(20px,1.85vw,26px)] w-[clamp(20px,1.85vw,26px)] cursor-pointer items-center justify-center rounded-[clamp(5px,0.55vw,8px)] border border-white/25 bg-white/10 text-white/85 transition-colors duration-200 hover:border-[#BB4732] hover:bg-[#BB4732]/30 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-[58%] w-[58%] transition-transform duration-200 group-hover:translate-x-0.5"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </article>
             )
           })}
         </div>
-
-        {/* 8. Left Column: Closing Quote Mark ” */}
-        <span
-          aria-hidden="true"
-          style={{
-            left: `${(362 / CANVAS_W) * 100}%`,
-            top: `${(542 / CANVAS_H) * 100}%`,
-            opacity: closeQuoteP,
-            transform:
-              textPhase === 'exiting'
-                ? 'translate3d(4px, 4px, 0) scale(0.92)'
-                : `translate3d(0, ${(1 - closeQuoteP) * 14}px, 0) scale(1)`,
-            transition: 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-          className="pointer-events-none absolute font-serif text-[clamp(24px,3.2vw,44px)] font-bold leading-none text-[#C74337]"
-        >
-          &rdquo;
-        </span>
 
         {/* 9. Right-Side Vertical Slideshow & Vertical Rectangle Indicator */}
         <div
@@ -679,7 +744,7 @@ export default function Company() {
                 const cardKey = `${slide.id}-${idx}`
                 const slideIdx = idx % SLIDES.length
                 const isHovered = hoveredCardKey === cardKey
-                const isSelected = selectedSlideId === slide.id
+                const isSelected = activeCardIndex === slideIdx
 
                 return (
                   <figure
@@ -752,7 +817,7 @@ export default function Company() {
           {/* Vertical indicator composed of tiny rectangles that turn red (#BB4732) */}
           <div
             role="tablist"
-            aria-label="Slide indicator"
+            aria-label={t.company.slideIndicatorAria}
             className="flex flex-col items-center justify-center gap-[clamp(6px,0.55vw,10px)]"
           >
             {SLIDES.map((slide, index) => {
@@ -763,7 +828,7 @@ export default function Company() {
                   type="button"
                   role="tab"
                   aria-selected={isCurrent}
-                  aria-label={`Slide ${index + 1}`}
+                  aria-label={t.company.slideAria(index + 1)}
                   onClick={() => handleCounterClick(slide, index)}
                   style={{
                     backgroundColor: isCurrent

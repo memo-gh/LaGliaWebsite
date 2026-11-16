@@ -5,6 +5,7 @@ import comingSoonBottleImg from '../assets/pngwing.com(1).png'
 import wineBarIcon from '../assets/wine_bar_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import nutritionIcon from '../assets/nutrition_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import restaurantIcon from '../assets/restaurant_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
+import { useLanguage } from '../i18n/useLanguage'
 
 const CANVAS_W = 1045
 const CANVAS_H = 512
@@ -50,17 +51,6 @@ const DESCRIPTION_LINES = [
   'nostrud aliqua cupidatat. Vero laborum',
   'officia qui nulla nostrud excepteur fugiat',
   'lorem. Iusto deserunt elit lorem',
-]
-
-const COMING_SOON_LINES = [
-  'Un nuovo capitolo della nostra cantina',
-  'sta maturando lentamente in botte.',
-  'Curiamo ogni dettaglio con dedizione',
-  'per offrirvi un vino dal carattere autentico.',
-  'Il tempo e il terroir stanno compiendo',
-  'la loro magia silenziosa.',
-  'Presto disponibile per la degustazione',
-  'e la scoperta in anteprima.',
 ]
 
 const WINE_SPECS = [
@@ -234,6 +224,7 @@ function getLayoutConfig(active) {
 }
 
 export default function Wine() {
+  const { t } = useLanguage()
   const sectionRef = useRef(null)
 
   // Red card refs
@@ -915,12 +906,22 @@ export default function Wine() {
     const isDetailHovered = hoveredDetailCard === cardKey
     const isDetailOpen = openDetails[cardKey]
 
-    const linesToRender = isComingSoon ? COMING_SOON_LINES : DESCRIPTION_LINES
-    const specsToRender = isComingSoon ? COMING_SOON_SPECS : WINE_SPECS
+    const linesToRender = isComingSoon
+      ? t.wine.comingSoonLines
+      : DESCRIPTION_LINES
+    const specTranslations = isComingSoon
+      ? t.wine.specs.comingSoon
+      : t.wine.specs.merlot
+    const specsToRender = (isComingSoon ? COMING_SOON_SPECS : WINE_SPECS).map(
+      (spec) => ({
+        ...spec,
+        label: specTranslations[spec.id] ?? spec.label,
+      })
+    )
     const bottleImgSrc = isComingSoon ? comingSoonBottleImg : merlotBottleImg
     const bottleAltText = isComingSoon
-      ? 'Prossimo vino in arrivo'
-      : 'Bottiglia Il Merlot 2023'
+      ? t.wine.comingSoonBottleAlt
+      : t.wine.merlotBottleAlt
 
     return (
       <div
@@ -942,7 +943,7 @@ export default function Wine() {
           }}
           className="absolute font-serif text-[clamp(20px,2.9vw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
         >
-          {isComingSoon ? 'Prossimamente' : 'Il Merlot'}
+          {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
         </h3>
 
         {/* Top Row: Year ("2023" on Red card, or "In Arrivo" badge on Coming Soon card) */}
@@ -985,7 +986,7 @@ export default function Wine() {
             }}
             className="absolute z-25 inline-flex items-center gap-[0.3em] font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE]/80 leading-none tracking-[0.02em]"
           >
-            In Cantina
+            {t.wine.inCellarBadge}
           </span>
         ) : (
           <button
@@ -1004,7 +1005,7 @@ export default function Wine() {
             }}
             className="absolute z-25 inline-flex items-center gap-[0.3em] bg-transparent border-0 p-0 font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.02em] cursor-pointer"
           >
-            <span>In Dettaglio</span>
+            <span>{t.wine.inDetailBtn}</span>
             <span
               style={{
                 transform: isDetailHovered
@@ -1135,7 +1136,7 @@ export default function Wine() {
           }}
           className="pointer-events-none absolute z-20 font-serif italic text-[clamp(8px,0.92vw,14px)] font-normal text-[#FFF9EE]/75 leading-none tracking-[0.02em] whitespace-nowrap"
         >
-          {isComingSoon ? 'prezzo: —' : 'prezzo: 24,00 €'}
+          {isComingSoon ? t.wine.priceComingSoon : t.wine.priceMerlot}
         </span>
 
         {/* Vertical Left-to-Right "I Dettagli" Card Overlay */}
@@ -1151,7 +1152,7 @@ export default function Wine() {
           }}
           className="absolute inset-0 z-30 bg-[#5A174F] cursor-pointer select-none overflow-hidden"
           role="region"
-          aria-label="I Dettagli del vino"
+          aria-label={t.wine.detailsRegionAria}
         >
           {/* Centered Top Heading: "I Dettagli" */}
           <h4
@@ -1163,7 +1164,7 @@ export default function Wine() {
             }}
             className="absolute font-serif text-[clamp(18px,2.55vw,38px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
           >
-            I Dettagli
+            {t.wine.detailsTitle}
           </h4>
 
           {/* 2x2 Category Blocks (Left & Middle Columns) */}
@@ -1188,7 +1189,7 @@ export default function Wine() {
                 }}
                 className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
               >
-                {item.category}
+                {t.wine.categoryLabel}
               </span>
               <span
                 data-detail-item
@@ -1224,7 +1225,7 @@ export default function Wine() {
             }}
             className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
           >
-            VINIFICAZIONE
+            {t.wine.vinificationLabel}
           </span>
 
           <div
@@ -1307,7 +1308,7 @@ export default function Wine() {
           }}
           className="absolute font-serif text-[clamp(22px,3.1vw,46px)] font-bold text-white leading-none tracking-[0.01em]"
         >
-          I Nostri Vini
+          {t.wine.sectionTitle}
         </h2>
 
         {/* 3. Red Card (#BB4732) - Expanded initially, squeezed on left when Blue ("Prossimamente") is active */}
@@ -1321,7 +1322,7 @@ export default function Wine() {
           className={`absolute ${activeCard === 'red' ? 'z-10' : 'z-20 cursor-pointer'} will-change-[width,height,left,top,transform]`}
           role={activeCard !== 'red' ? 'button' : undefined}
           tabIndex={activeCard !== 'red' ? 0 : undefined}
-          aria-label={activeCard !== 'red' ? 'Vino precedente' : undefined}
+          aria-label={activeCard !== 'red' ? t.wine.prevWineAria : undefined}
         >
           <div
             style={{
@@ -1397,7 +1398,7 @@ export default function Wine() {
           role={activeCard !== 'blue' ? 'button' : undefined}
           tabIndex={activeCard !== 'blue' ? 0 : undefined}
           aria-label={
-            activeCard !== 'blue' ? 'Prossimo vino in arrivo' : undefined
+            activeCard !== 'blue' ? t.wine.nextWineAria : undefined
           }
         >
           <div
@@ -1501,7 +1502,7 @@ export default function Wine() {
             />
           </svg>
           <span className="font-sans text-[clamp(10px,1.12vw,16px)] font-bold leading-none tracking-[0.01em]">
-            Acquista
+            {t.wine.buyBtn}
           </span>
         </button>
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../i18n/useLanguage'
 
 const CANVAS_W = 1067
 const CANVAS_H = 629
@@ -160,39 +161,30 @@ function VineyardIcon({ className = 'w-full h-full' }) {
 const TERROIR_ITEMS = [
   {
     id: 'terreno',
-    title: 'Terreno',
     Icon: AltitudeProfileIcon,
     lines: [
       'Lorem ipsum dolor sit amet',
       'consectetur adipiscing elit. Amet',
       'consectetur adipiscing elit quisque.',
     ],
-    detailText:
-      'Suolo franco-argilloso ricco di scheletro minerale a 350m s.l.m., ideale per conferire struttura, sapidità ed eleganza alle radici.',
   },
   {
     id: 'clima',
-    title: 'Clima',
     Icon: ClimateIcon,
     lines: [
       'Lorem ipsum dolor sit amet',
       'consectetur adipiscing elit. Amet',
       'consectetur adipiscing elit quisque.',
     ],
-    detailText:
-      'Microclima preappenninico caratterizzato da forti escursioni termiche tra il giorno e la notte che esaltano i profumi varietali.',
   },
   {
     id: 'vigna',
-    title: 'Vigna',
     Icon: VineyardIcon,
     lines: [
       'Lorem ipsum dolor sit amet',
       'consectetur adipiscing elit. Amet',
       'consectetur adipiscing elit quisque.',
     ],
-    detailText:
-      'Filari esposti a Sud-Ovest nella valle del Casentino, accarezzati dalla brezza costante e coltivati nel pieno rispetto dei cicli naturali.',
   },
 ]
 
@@ -267,6 +259,7 @@ function CardBorderGlow() {
 }
 
 export default function Terroir() {
+  const { t } = useLanguage()
   const sectionRef = useRef(null)
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
@@ -437,9 +430,18 @@ export default function Terroir() {
   const rightTopCardP = stage(progress, 0.2, 0.5)
   const rightBottomCardP = stage(progress, 0.26, 0.56)
 
-  const featuredItem = TERROIR_ITEMS[cardOrder[0]]
-  const rightTopItem = TERROIR_ITEMS[cardOrder[1]]
-  const rightBottomItem = TERROIR_ITEMS[cardOrder[2]]
+  const featuredItem = {
+    ...TERROIR_ITEMS[cardOrder[0]],
+    ...t.terroir.items[TERROIR_ITEMS[cardOrder[0]].id],
+  }
+  const rightTopItem = {
+    ...TERROIR_ITEMS[cardOrder[1]],
+    ...t.terroir.items[TERROIR_ITEMS[cardOrder[1]].id],
+  }
+  const rightBottomItem = {
+    ...TERROIR_ITEMS[cardOrder[2]],
+    ...t.terroir.items[TERROIR_ITEMS[cardOrder[2]].id],
+  }
 
   const FeaturedIcon = featuredItem.Icon
   const RightTopIcon = rightTopItem.Icon
@@ -545,7 +547,7 @@ export default function Terroir() {
             }}
             className="m-0 font-serif text-[clamp(22px,3.1vw,42px)] font-bold text-[#FFF9EE] leading-[1.08] tracking-[0.01em]"
           >
-            Territorio
+            {t.terroir.title}
           </h2>
 
           <p
@@ -555,10 +557,8 @@ export default function Terroir() {
             }}
             className="mt-[clamp(8px,1.35vw,18px)] mb-0 font-serif text-[clamp(11px,1.52vw,20.5px)] font-normal text-[#FFF9EE]/95 leading-[1.4] tracking-[0.01em]"
           >
-            <span className="block">
-              Scopri il territorio della valle del Casentino dove nascono e
-            </span>
-            <span className="block">maturano i nostri prodotti</span>
+            <span className="block">{t.terroir.subtitleLine1}</span>
+            <span className="block">{t.terroir.subtitleLine2}</span>
           </p>
         </header>
 
@@ -638,7 +638,7 @@ export default function Terroir() {
               }}
               className="absolute flex items-center justify-center rounded-[clamp(8px,1.1vw,14px)] bg-[#BB4237] hover:bg-[#C94B3F] active:scale-[0.98] cursor-pointer border-none font-serif text-[clamp(9.5px,1.2vw,16px)] font-normal text-[#FFF9EE] tracking-[0.01em] shadow-[0_6px_16px_rgba(187,66,55,0.28)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FFF9EE]/80"
             >
-              {isDetailOpen ? 'Mostra meno' : 'Scopri di più'}
+              {isDetailOpen ? t.terroir.showLess : t.terroir.learnMore}
             </button>
           </div>
         </article>
@@ -705,7 +705,7 @@ export default function Terroir() {
             {/* Right Chevron Action Button (x: 452..505, y: 32..85 inside 539x123 card) */}
             <button
               type="button"
-              aria-label={`Mostra dettagli ${rightTopItem.title}`}
+              aria-label={t.terroir.showDetailsAria(rightTopItem.title)}
               onClick={() => handleSwapWithFeatured(1)}
               style={{
                 left: `${(452 / 539) * 100}%`,
@@ -795,7 +795,7 @@ export default function Terroir() {
             {/* Right Chevron Action Button (x: 452..505, y: 34..89 inside 539x129 card) */}
             <button
               type="button"
-              aria-label={`Mostra dettagli ${rightBottomItem.title}`}
+              aria-label={t.terroir.showDetailsAria(rightBottomItem.title)}
               onClick={() => handleSwapWithFeatured(2)}
               style={{
                 left: `${(452 / 539) * 100}%`,
