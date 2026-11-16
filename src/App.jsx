@@ -1,13 +1,16 @@
-import { useLayoutEffect } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import Hero from './components/Hero/Hero'
 import Terroir from './components/terroir'
 import Company from './components/Company'
 import Wine from './components/Wine'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
+import LoadingScreen from './components/LoadingScreen'
 import './App.css'
 
 function App() {
+  const [isHeroReady, setIsHeroReady] = useState(false)
+
   useLayoutEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual'
@@ -24,7 +27,8 @@ function App() {
 
   return (
     <main className="bg-[#0A0A0A]">
-      <Hero />
+      <LoadingScreen onStartExit={() => setIsHeroReady(true)} />
+      <Hero isReady={isHeroReady} />
       <Terroir />
       <Company />
       <Wine />

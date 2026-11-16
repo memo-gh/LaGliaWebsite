@@ -1261,7 +1261,7 @@ export default function Wine() {
     <section
       ref={sectionRef}
       id="vini"
-      className="relative w-full min-h-dvh bg-[linear-gradient(180deg,#2E2828_0%,#252121_34%,#1D1919_68%,#141111_100%)] text-white select-none overflow-hidden"
+      className="relative w-full min-h-dvh bg-[linear-gradient(180deg,#332D2B_0%,#282322_34%,#1E1A1A_68%,#141111_100%)] text-white select-none overflow-hidden"
     >
       {/* Uses the exact same max-w-[1440px] centered coordinate space as Company.jsx so the top vertical line aligns 1:1 */}
       <div

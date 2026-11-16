@@ -4,6 +4,12 @@ import vineyardImg from '../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
 const CANVAS_W = 1257
 const CANVAS_H = 639
 
+// Exact horizontal coordinate of the bottom-left vertical line in Terroir.jsx (21 / 1067)
+// so it connects seamlessly across the section boundary into the line beneath "L'Azienda".
+const TERROIR_BOTTOM_LEFT_LINE_X_PCT = (21 / 1067) * 100
+const HEADER_LINE_RIGHT_X_PCT = (662 / CANVAS_W) * 100
+const HEADER_LINE_Y_PCT = (113.5 / CANVAS_H) * 100
+
 function clamp01(val) {
   return Math.max(0, Math.min(1, val))
 }
@@ -139,7 +145,7 @@ export default function Company() {
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
 
-  // Continuous horizontal track offset (in px), velocity, and click-to-center animation state
+  // Continuous vertical track offset (in px), velocity, and click-to-center animation state
   const offsetPxRef = useRef(0)
   const hasCenteredInitialSlideRef = useRef(false)
   const speedFactorRef = useRef(0)
@@ -192,27 +198,28 @@ export default function Company() {
     }, 230)
   }
 
-  // Smoothly glides the clicked card to the horizontal center of the slideshow viewport
+  // Smoothly glides the clicked card to the vertical center of the slideshow viewport
   const centerCardInViewport = (cardIndexInTrack, slideIdx) => {
     const viewportEl = viewportRef.current
     const trackEl = trackRef.current
     if (!viewportEl || !trackEl) return
 
-    const halfWidth = trackEl.scrollWidth / 2
+    const halfHeight =
+      trackEl.children[SLIDES.length]?.offsetTop || trackEl.scrollHeight / 2
     const cardEl = trackEl.children[cardIndexInTrack]
-    if (!cardEl || halfWidth <= 0) return
+    if (!cardEl || halfHeight <= 0) return
 
-    const viewportCenter = viewportEl.clientWidth / 2
-    const cardCenter = cardEl.offsetLeft + cardEl.offsetWidth / 2
+    const viewportCenter = viewportEl.clientHeight / 2
+    const cardCenter = cardEl.offsetTop + cardEl.offsetHeight / 2
 
-    // We want cardCenter - offsetPx === viewportCenter (modulo halfWidth)
+    // We want cardCenter - offsetPx === viewportCenter (modulo halfHeight)
     const desiredOffset = cardCenter - viewportCenter
     const currentOffset = offsetPxRef.current
 
     let delta =
-      (((desiredOffset - currentOffset) % halfWidth) + halfWidth) % halfWidth
-    if (delta > halfWidth / 2) {
-      delta -= halfWidth
+      (((desiredOffset - currentOffset) % halfHeight) + halfHeight) % halfHeight
+    if (delta > halfHeight / 2) {
+      delta -= halfHeight
     }
 
     centeringAnimRef.current = {
@@ -299,23 +306,24 @@ export default function Company() {
         }, 550)
       }
 
-      // 2. Horizontal slideshow movement:
+      // 2. Vertical slideshow movement:
       //    Starts with slide-1 centered in the viewport; only begins sliding after isSlideshowReadyRef is true.
       const trackEl = trackRef.current
       const viewportEl = viewportRef.current
       if (trackEl && viewportEl) {
-        const halfWidth = trackEl.scrollWidth / 2
+        const halfHeight =
+          trackEl.children[SLIDES.length]?.offsetTop || trackEl.scrollHeight / 2
         const firstCard = trackEl.children[0]
 
-        if (halfWidth > 0 && firstCard) {
+        if (halfHeight > 0 && firstCard) {
           // Ensure the very first image starts centered in the slideshow viewport
           if (!hasCenteredInitialSlideRef.current) {
-            const viewportCenter = viewportEl.clientWidth / 2
+            const viewportCenter = viewportEl.clientHeight / 2
             const firstCardCenter =
-              firstCard.offsetLeft + firstCard.offsetWidth / 2
+              firstCard.offsetTop + firstCard.offsetHeight / 2
             offsetPxRef.current =
-              (((firstCardCenter - viewportCenter) % halfWidth) + halfWidth) %
-              halfWidth
+              (((firstCardCenter - viewportCenter) % halfHeight) + halfHeight) %
+              halfHeight
             hasCenteredInitialSlideRef.current = true
           }
 
@@ -326,7 +334,7 @@ export default function Company() {
             const eased = easeInOutCubic(t)
             const nextOffset = startOffset + delta * eased
             offsetPxRef.current =
-              ((nextOffset % halfWidth) + halfWidth) % halfWidth
+              ((nextOffset % halfHeight) + halfHeight) % halfHeight
 
             if (t >= 1) {
               centeringAnimRef.current = null
@@ -337,21 +345,21 @@ export default function Company() {
               (targetSpeedFactor - speedFactorRef.current) *
               Math.min(1, dt * 0.012)
 
-            const basePxPerMs = 0.032
+            const basePxPerMs = 0.026
             offsetPxRef.current =
               (offsetPxRef.current +
                 dt * basePxPerMs * speedFactorRef.current) %
-              halfWidth
+              halfHeight
           }
 
-          trackEl.style.transform = `translate3d(${-offsetPxRef.current}px, 0, 0)`
+          trackEl.style.transform = `translate3d(0, ${-offsetPxRef.current}px, 0)`
 
-          // Determine which slide is currently closest to the center of the slideshow viewport
+          // Determine which slide is currently closest to the vertical center of the slideshow viewport
           if (!centeringAnimRef.current) {
-            const viewportCenter = viewportEl.clientWidth / 2
+            const viewportCenter = viewportEl.clientHeight / 2
             const centerInTrack =
-              (offsetPxRef.current + viewportCenter) % halfWidth
-            const slideSpan = halfWidth / SLIDES.length
+              (offsetPxRef.current + viewportCenter) % halfHeight
+            const slideSpan = halfHeight / SLIDES.length
             const currentIdx =
               Math.floor(centerInTrack / slideSpan) % SLIDES.length
             setActiveSlideIndex((prev) =>
@@ -376,9 +384,10 @@ export default function Company() {
     }
   }, [])
 
-  // Phase 1: 3 white 1px architectural lines (draw progressively on scroll)
+  // Phase 1: White 1px architectural lines (draw progressively on scroll)
+  const topLeftVertLineP = stage(progress, 0.0, 0.24)
   const topRightVertLineP = stage(progress, 0.0, 0.38)
-  const horizLineP = stage(progress, 0.02, 0.44)
+  const horizLineP = stage(progress, 0.14, 0.48)
   const midBottomVertLineP = stage(progress, 0.22, 0.68)
 
   // Phase 2: Header ("L'Azienda" + "E i l suo team")
@@ -400,7 +409,7 @@ export default function Company() {
     <section
       ref={sectionRef}
       id="azienda"
-      className="relative w-full bg-[linear-gradient(180deg,#4E4A3A_0%,#3E3830_28%,#342D2B_64%,#2E2828_100%)] text-white select-none overflow-hidden"
+      className="relative w-full bg-[linear-gradient(180deg,#464534_0%,#3D3930_50%,#332D2B_100%)] text-white select-none overflow-hidden"
     >
       <style>{`
         @keyframes kbDrift1 {
@@ -439,13 +448,27 @@ export default function Company() {
 
       {/* Proportional 1257 x 639 architectural canvas matching the reference screenshot */}
       <div className="relative mx-auto w-full max-w-[1440px] aspect-[1257/639] min-h-[420px]">
-        {/* 1. Horizontal white line under "L'Azienda" (x: 40 -> 662, y: 113.5) */}
+        {/* 1A. Top-left vertical white line connecting from Terroir's bottom-left line down to the line beneath "L'Azienda" */}
         <div
           aria-hidden="true"
           style={{
-            left: `${(40 / CANVAS_W) * 100}%`,
-            top: `${(113.5 / CANVAS_H) * 100}%`,
-            width: `${((662 - 40) / CANVAS_W) * 100}%`,
+            left: `${TERROIR_BOTTOM_LEFT_LINE_X_PCT}%`,
+            top: '0%',
+            height: `${HEADER_LINE_Y_PCT}%`,
+            transformOrigin: 'center top',
+            transform: `scaleY(${topLeftVertLineP})`,
+            opacity: topLeftVertLineP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute z-20 w-px bg-white/65"
+        />
+
+        {/* 1B. Horizontal white line under "L'Azienda" connected at its left end to the top-left vertical line */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${TERROIR_BOTTOM_LEFT_LINE_X_PCT}%`,
+            top: `${HEADER_LINE_Y_PCT}%`,
+            width: `${HEADER_LINE_RIGHT_X_PCT - TERROIR_BOTTOM_LEFT_LINE_X_PCT}%`,
             transformOrigin: 'left center',
             transform: `scaleX(${horizLineP})`,
             opacity: horizLineP > 0.005 ? 1 : 0,
@@ -602,55 +625,55 @@ export default function Company() {
           &rdquo;
         </span>
 
-        {/* 9. Right-Side Slideshow & Tiny Rectangle Counter */}
+        {/* 9. Right-Side Vertical Slideshow & Vertical Rectangle Indicator */}
         <div
           style={{
             left: `${(662 / CANVAS_W) * 100}%`,
-            top: `${(208 / CANVAS_H) * 100}%`,
-            width: `${((1185 - 662) / CANVAS_W) * 100}%`,
+            top: `${(188 / CANVAS_H) * 100}%`,
+            width: `${((1205 - 662) / CANVAS_W) * 100}%`,
             opacity: slideshowP,
             transform: `translate3d(${(1 - slideshowP) * 32}px, ${(1 - slideshowP) * 14}px, 0)`,
           }}
-          className="absolute flex flex-col"
+          className="absolute flex items-center gap-[clamp(8px,0.9vw,14px)]"
         >
-          {/* Masked & Blurred-Edge Slideshow Viewport */}
+          {/* Masked & Blurred-Edge Vertical Slideshow Viewport */}
           <div
             ref={viewportRef}
             style={{
               WebkitMaskImage:
-                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.25) 4%, rgba(0,0,0,0.75) 9%, black 15%, black 85%, rgba(0,0,0,0.75) 91%, rgba(0,0,0,0.25) 96%, transparent 100%)',
+                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.25) 4%, rgba(0,0,0,0.75) 9%, black 15%, black 85%, rgba(0,0,0,0.75) 91%, rgba(0,0,0,0.25) 96%, transparent 100%)',
               maskImage:
-                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.25) 4%, rgba(0,0,0,0.75) 9%, black 15%, black 85%, rgba(0,0,0,0.75) 91%, rgba(0,0,0,0.25) 96%, transparent 100%)',
+                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.25) 4%, rgba(0,0,0,0.75) 9%, black 15%, black 85%, rgba(0,0,0,0.75) 91%, rgba(0,0,0,0.25) 96%, transparent 100%)',
             }}
-            className="relative overflow-hidden py-[2.2%]"
+            className="relative flex-1 aspect-[522/410] overflow-hidden px-[2.2%]"
           >
-            {/* Left progressive blur feather overlay */}
+            {/* Top progressive blur feather overlay */}
             <div
               aria-hidden="true"
               style={{
                 WebkitMaskImage:
-                  'linear-gradient(to right, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
                 maskImage:
-                  'linear-gradient(to right, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
               }}
-              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[16%] backdrop-blur-[8px]"
+              className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[16%] backdrop-blur-[8px]"
             />
 
-            {/* Right progressive blur feather overlay */}
+            {/* Bottom progressive blur feather overlay */}
             <div
               aria-hidden="true"
               style={{
                 WebkitMaskImage:
-                  'linear-gradient(to left, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
+                  'linear-gradient(to top, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
                 maskImage:
-                  'linear-gradient(to left, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
+                  'linear-gradient(to top, black 0%, rgba(0,0,0,0.65) 45%, transparent 100%)',
               }}
-              className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[16%] backdrop-blur-[8px]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[16%] backdrop-blur-[8px]"
             />
 
             <div
               ref={trackRef}
-              className="flex w-max items-start gap-[clamp(8px,0.9vw,14px)] will-change-transform"
+              className="flex w-full flex-col will-change-transform"
             >
               {loopedSlides.map((slide, idx) => {
                 const cardKey = `${slide.id}-${idx}`
@@ -682,26 +705,16 @@ export default function Company() {
                       }
                     }}
                     style={{
-                      transform: isHovered ? 'scale(1.045)' : 'scale(1)',
+                      transform: isHovered ? 'scale(1.03)' : 'scale(1)',
                       transition:
                         'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)',
                     }}
-                    className={`m-0 flex shrink-0 flex-col w-[clamp(200px,36vw,480px)] cursor-pointer outline-none ${
+                    className={`m-0 flex w-full shrink-0 flex-col pb-[clamp(10px,1.1vw,16px)] cursor-pointer outline-none ${
                       isHovered ? 'z-10' : 'z-0'
                     }`}
                   >
-                    {/* Image frame matching the 522x348 aspect ratio from the reference screenshot */}
-                    <div
-                      style={{
-                        boxShadow: isSelected
-                          ? '0 0 0 1.5px #BB4732, 0 12px 28px rgba(0,0,0,0.4)'
-                          : isHovered
-                            ? '0 10px 26px rgba(0,0,0,0.38)'
-                            : 'none',
-                        transition: 'box-shadow 300ms ease',
-                      }}
-                      className="relative w-full aspect-[522/348] overflow-hidden bg-black/25"
-                    >
+                    {/* Borderless image frame matching the 522x348 aspect ratio */}
+                    <div className="relative w-full aspect-[522/348] overflow-hidden">
                       <img
                         src={slide.src}
                         alt={slide.alt}
@@ -736,11 +749,11 @@ export default function Company() {
             </div>
           </div>
 
-          {/* Counter below the images composed of tiny rectangles that turn red (#BB4732) */}
+          {/* Vertical indicator composed of tiny rectangles that turn red (#BB4732) */}
           <div
             role="tablist"
             aria-label="Slide indicator"
-            className="mt-[clamp(6px,0.7vw,12px)] flex items-center justify-center gap-[clamp(6px,0.55vw,10px)]"
+            className="flex flex-col items-center justify-center gap-[clamp(6px,0.55vw,10px)]"
           >
             {SLIDES.map((slide, index) => {
               const isCurrent = highlightedSlideIndex === index
@@ -756,11 +769,11 @@ export default function Company() {
                     backgroundColor: isCurrent
                       ? '#BB4732'
                       : 'rgba(255, 255, 255, 0.26)',
-                    transform: isCurrent ? 'scaleX(1.15)' : 'scaleX(1)',
+                    transform: isCurrent ? 'scaleY(1.15)' : 'scaleY(1)',
                     transition:
                       'background-color 300ms ease, transform 300ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
-                  className="h-[clamp(3px,0.32vw,4.5px)] w-[clamp(16px,1.8vw,26px)] cursor-pointer rounded-[1px] border-none p-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80"
+                  className="w-[clamp(3px,0.32vw,4.5px)] h-[clamp(16px,1.8vw,26px)] cursor-pointer rounded-[1px] border-none p-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80"
                 />
               )
             })}

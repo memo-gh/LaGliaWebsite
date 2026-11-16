@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 import heroBg from '../../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
 import MenuWheel from './MenuWheel'
 
-export default function Hero() {
+export default function Hero({ isReady = true }) {
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
+    if (!isReady) return
     const frame = requestAnimationFrame(() => {
       setIsLoaded(true)
     })
     return () => cancelAnimationFrame(frame)
-  }, [])
+  }, [isReady])
 
   const handleNavigate = (item) => {
     if (!item?.href || item.href === '#') return

@@ -184,7 +184,7 @@ const TERROIR_ITEMS = [
   },
   {
     id: 'vigna',
-    title: 'Clima',
+    title: 'Vigna',
     Icon: VineyardIcon,
     lines: [
       'Lorem ipsum dolor sit amet',
@@ -196,16 +196,148 @@ const TERROIR_ITEMS = [
   },
 ]
 
+const OUTER_HUE_MASK_PAD_PX = 14
+const OUTER_HUE_RING_PX = 3
+
+const BORDER_MASK_STYLE = {
+  WebkitMask:
+    'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+  WebkitMaskComposite: 'xor',
+  maskComposite: 'exclude',
+}
+
+function projectPointToBorder(mx, my, width, height) {
+  const cx = width / 2
+  const cy = height / 2
+  let dx = mx - cx
+  let dy = my - cy
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+    dx = 0
+    dy = -1
+  }
+  const scale = Math.min(
+    cx / Math.max(Math.abs(dx), 0.001),
+    cy / Math.max(Math.abs(dy), 0.001)
+  )
+  return {
+    bx: cx + dx * scale,
+    by: cy + dy * scale,
+  }
+}
+
+function CardBorderGlow() {
+  return (
+    <>
+      {/* Thin outer hue effect outside the card following the highlighted border section */}
+      <div
+        aria-hidden="true"
+        style={{
+          ...BORDER_MASK_STYLE,
+          inset: `-${OUTER_HUE_MASK_PAD_PX}px`,
+          padding: `${OUTER_HUE_MASK_PAD_PX}px`,
+          borderRadius: `calc(clamp(10px, 1.3vw, 16px) + ${OUTER_HUE_MASK_PAD_PX}px)`,
+        }}
+        className="pointer-events-none absolute z-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"
+      >
+        <div
+          style={{
+            ...BORDER_MASK_STYLE,
+            position: 'absolute',
+            inset: `${OUTER_HUE_MASK_PAD_PX - OUTER_HUE_RING_PX}px`,
+            padding: `${OUTER_HUE_RING_PX + 1}px`,
+            borderRadius: `calc(clamp(10px, 1.3vw, 16px) + ${OUTER_HUE_RING_PX}px)`,
+            background: `radial-gradient(130px circle at calc(var(--hx, 50%) + ${OUTER_HUE_RING_PX}px) calc(var(--hy, 0%) + ${OUTER_HUE_RING_PX}px), rgba(179, 62, 42, 0.62) 0%, rgba(148, 49, 32, 0.36) 42%, rgba(110, 34, 21, 0) 100%)`,
+            filter: 'blur(4px)',
+          }}
+        />
+      </div>
+
+      {/* Highlighted section of the border (darker terracotta/wine red) */}
+      <div
+        aria-hidden="true"
+        style={{
+          ...BORDER_MASK_STYLE,
+          background:
+            'radial-gradient(130px circle at var(--hx, 50%) var(--hy, 0%), #B33E2A 0%, #943120 38%, #6E2215 70%, rgba(110, 34, 21, 0) 100%)',
+        }}
+        className="pointer-events-none absolute inset-0 z-20 rounded-[clamp(10px,1.3vw,16px)] p-[1.25px] opacity-0 group-hover/card:opacity-100 transition-opacity duration-300"
+      />
+    </>
+  )
+}
+
 export default function Terroir() {
   const sectionRef = useRef(null)
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
   const [progress, setProgress] = useState(0)
 
+  const cardRefs = useRef({
+    left: null,
+    rightTop: null,
+    rightBottom: null,
+  })
+  const borderGlowPosRef = useRef({
+    left: { curX: 190, curY: 0, targetX: 190, targetY: 0, active: false },
+    rightTop: { curX: 270, curY: 0, targetX: 270, targetY: 0, active: false },
+    rightBottom: {
+      curX: 270,
+      curY: 0,
+      targetX: 270,
+      targetY: 0,
+      active: false,
+    },
+  })
+
   // Order of cards: index 0 is featured on the left, indices 1 and 2 are stacked on the right
   const [cardOrder, setCardOrder] = useState([0, 1, 2])
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isSwapping, setIsSwapping] = useState(false)
+
+  const handleCardMouseEnter = (slotKey, e) => {
+    const el = e.currentTarget
+    const rect = el.getBoundingClientRect()
+    const { bx, by } = projectPointToBorder(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+      rect.width,
+      rect.height
+    )
+    const state = borderGlowPosRef.current[slotKey]
+    if (state) {
+      state.curX = bx
+      state.curY = by
+      state.targetX = bx
+      state.targetY = by
+      state.active = true
+    }
+    el.style.setProperty('--hx', `${bx.toFixed(1)}px`)
+    el.style.setProperty('--hy', `${by.toFixed(1)}px`)
+  }
+
+  const handleCardMouseMove = (slotKey, e) => {
+    const el = e.currentTarget
+    const rect = el.getBoundingClientRect()
+    const { bx, by } = projectPointToBorder(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+      rect.width,
+      rect.height
+    )
+    const state = borderGlowPosRef.current[slotKey]
+    if (state) {
+      state.targetX = bx
+      state.targetY = by
+      state.active = true
+    }
+  }
+
+  const handleCardMouseLeave = (slotKey) => {
+    const state = borderGlowPosRef.current[slotKey]
+    if (state) {
+      state.active = false
+    }
+  }
 
   useEffect(() => {
     let rafId = null
@@ -234,8 +366,8 @@ export default function Terroir() {
     const animateLoop = () => {
       const diff = targetProgressRef.current - currentProgressRef.current
       if (Math.abs(diff) > 0.0004) {
-        const maxStep = 0.006
-        const damped = diff * 0.036
+        const maxStep = 0.014
+        const damped = diff * 0.075
         const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
         currentProgressRef.current += step
         setProgress(currentProgressRef.current)
@@ -243,6 +375,22 @@ export default function Terroir() {
         currentProgressRef.current = targetProgressRef.current
         setProgress(currentProgressRef.current)
       }
+
+      // Smoothly interpolate the highlighted border section and outer hue position along each card perimeter
+      ;['left', 'rightTop', 'rightBottom'].forEach((slotKey) => {
+        const state = borderGlowPosRef.current[slotKey]
+        const cardEl = cardRefs.current[slotKey]
+        if (!state || !cardEl) return
+        const dx = state.targetX - state.curX
+        const dy = state.targetY - state.curY
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+          state.curX += dx * 0.22
+          state.curY += dy * 0.22
+          cardEl.style.setProperty('--hx', `${state.curX.toFixed(1)}px`)
+          cardEl.style.setProperty('--hy', `${state.curY.toFixed(1)}px`)
+        }
+      })
+
       rafId = requestAnimationFrame(animateLoop)
     }
 
@@ -285,9 +433,9 @@ export default function Terroir() {
   const leftCornerHorizP = stage(progress, 0.52, 0.8)
   const leftCornerVertP = stage(progress, 0.68, 0.98)
 
-  const leftCardP = stage(progress, 0.24, 0.64)
-  const rightTopCardP = stage(progress, 0.34, 0.74)
-  const rightBottomCardP = stage(progress, 0.44, 0.84)
+  const leftCardP = stage(progress, 0.14, 0.44)
+  const rightTopCardP = stage(progress, 0.2, 0.5)
+  const rightBottomCardP = stage(progress, 0.26, 0.56)
 
   const featuredItem = TERROIR_ITEMS[cardOrder[0]]
   const rightTopItem = TERROIR_ITEMS[cardOrder[1]]
@@ -297,14 +445,14 @@ export default function Terroir() {
   const RightTopIcon = rightTopItem.Icon
   const RightBottomIcon = rightBottomItem.Icon
 
-  // Card styling: rich dark woodland-espresso charcoal that harmonizes with the brighter green-to-earth background
+  // Card styling: ~50% transparent dark woodland-espresso charcoal that harmonizes with the green-to-earth background
   const cardSurfaceClass =
-    'bg-[linear-gradient(145deg,#151A11_0%,#0E120C_100%)] border border-[#FFF9EE]/10 shadow-[0_18px_42px_rgba(0,0,0,0.38)] hover:border-[#FFF9EE]/20 transition-[border-color,box-shadow,transform] duration-300'
+    'group/card bg-[linear-gradient(145deg,rgba(21,26,17,0.52)_0%,rgba(14,18,12,0.46)_100%)] backdrop-blur-[6px] border border-[#FFF9EE]/12 shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition-[border-color,box-shadow] duration-300'
 
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-[linear-gradient(180deg,#314A18_0%,#374B20_28%,#42472C_64%,#4E4A3A_100%)] text-[#FFF9EE] select-none overflow-hidden"
+      className="relative w-full bg-[linear-gradient(180deg,#314A18_0%,#3B4826_50%,#464534_100%)] text-[#FFF9EE] select-none overflow-hidden"
     >
       {/* Proportional 1067 x 629 architectural canvas matching the reference screenshot */}
       <div
@@ -416,6 +564,12 @@ export default function Terroir() {
 
         {/* 4. Left Featured Card (x: 27 -> 409, y: 230 -> 503) */}
         <article
+          ref={(el) => {
+            cardRefs.current.left = el
+          }}
+          onMouseEnter={(e) => handleCardMouseEnter('left', e)}
+          onMouseMove={(e) => handleCardMouseMove('left', e)}
+          onMouseLeave={() => handleCardMouseLeave('left')}
           style={{
             left: `${(27 / CANVAS_W) * 100}%`,
             top: `${(230 / CANVAS_H) * 100}%`,
@@ -426,13 +580,14 @@ export default function Terroir() {
           }}
           className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
         >
+          <CardBorderGlow />
           <div
             style={{
               opacity: isSwapping ? 0 : 1,
               transform: isSwapping ? 'translateY(6px)' : 'translateY(0)',
               transition: 'opacity 180ms ease, transform 180ms ease',
             }}
-            className="relative h-full w-full"
+            className="relative z-10 h-full w-full"
           >
             {/* Icon + Title row */}
             <div
@@ -490,6 +645,12 @@ export default function Terroir() {
 
         {/* 5. Top-Right Horizontal Card (x: 440 -> 979, y: 232 -> 355) */}
         <article
+          ref={(el) => {
+            cardRefs.current.rightTop = el
+          }}
+          onMouseEnter={(e) => handleCardMouseEnter('rightTop', e)}
+          onMouseMove={(e) => handleCardMouseMove('rightTop', e)}
+          onMouseLeave={() => handleCardMouseLeave('rightTop')}
           style={{
             left: `${(440 / CANVAS_W) * 100}%`,
             top: `${(232 / CANVAS_H) * 100}%`,
@@ -500,12 +661,13 @@ export default function Terroir() {
           }}
           className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
         >
+          <CardBorderGlow />
           <div
             style={{
               opacity: isSwapping ? 0 : 1,
               transition: 'opacity 180ms ease',
             }}
-            className="relative h-full w-full"
+            className="relative z-10 h-full w-full"
           >
             {/* Left Icon */}
             <div
@@ -573,6 +735,12 @@ export default function Terroir() {
 
         {/* 6. Bottom-Right Horizontal Card (x: 440 -> 979, y: 374 -> 503) */}
         <article
+          ref={(el) => {
+            cardRefs.current.rightBottom = el
+          }}
+          onMouseEnter={(e) => handleCardMouseEnter('rightBottom', e)}
+          onMouseMove={(e) => handleCardMouseMove('rightBottom', e)}
+          onMouseLeave={() => handleCardMouseLeave('rightBottom')}
           style={{
             left: `${(440 / CANVAS_W) * 100}%`,
             top: `${(374 / CANVAS_H) * 100}%`,
@@ -583,12 +751,13 @@ export default function Terroir() {
           }}
           className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
         >
+          <CardBorderGlow />
           <div
             style={{
               opacity: isSwapping ? 0 : 1,
               transition: 'opacity 180ms ease',
             }}
-            className="relative h-full w-full"
+            className="relative z-10 h-full w-full"
           >
             {/* Left Icon */}
             <div
