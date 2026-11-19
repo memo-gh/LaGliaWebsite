@@ -3,14 +3,20 @@ import Hero from './components/Hero/Hero'
 import Terroir from './components/terroir'
 import Company from './components/Company'
 import Wine from './components/Wine'
+import Events from './components/Events'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 import LoadingScreen from './components/LoadingScreen'
+import WIP from './components/WIP'
 import { LanguageProvider } from './i18n/LanguageContext'
 import './App.css'
 
 function App() {
   const [isHeroReady, setIsHeroReady] = useState(false)
+  const [isWipOpen, setIsWipOpen] = useState(false)
+
+  const openWip = () => setIsWipOpen(true)
+  const closeWip = () => setIsWipOpen(false)
 
   useLayoutEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -27,15 +33,17 @@ function App() {
   }, [])
 
   return (
-    <LanguageProvider defaultLanguage="it">
+    <LanguageProvider>
       <main className="bg-[#0A0A0A]">
         <LoadingScreen onStartExit={() => setIsHeroReady(true)} />
         <Hero isReady={isHeroReady} />
         <Terroir />
         <Company />
-        <Wine />
+        <Wine onOpenWip={openWip} />
+        <Events onOpenWip={openWip} />
         <Footer />
         <ScrollToTop />
+        <WIP isOpen={isWipOpen} onClose={closeWip} />
       </main>
     </LanguageProvider>
   )

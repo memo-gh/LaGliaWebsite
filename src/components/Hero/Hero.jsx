@@ -78,7 +78,7 @@ export default function Hero({
             }}
             className="font-serif text-[clamp(1.1rem,2.1vw,2.75rem)] font-normal tracking-wide text-white leading-none pb-[0.12em]"
           >
-            LA GLIA winery
+            LA GLIA | Azienda Agricola
           </span>
         </header>
 

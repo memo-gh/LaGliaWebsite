@@ -13,7 +13,6 @@ const CANVAS_H = 512
 // Exact horizontal coordinate of the lower-middle vertical line at the bottom of Company.jsx (532.5 / 1257)
 // so the top vertical line in Wine.jsx aligns seamlessly with it across the section boundary.
 const TOP_LINE_X_PCT = (532.5 / 1257) * 100
-const BOTTOM_LINE_X_PCT = (604.5 / CANVAS_W) * 100
 
 const RED_CARD_W = 801
 const RED_CARD_H = 295
@@ -223,7 +222,7 @@ function getLayoutConfig(active) {
   }
 }
 
-export default function Wine() {
+export default function Wine({ onOpenWip }) {
   const { t } = useLanguage()
   const sectionRef = useRef(null)
 
@@ -870,8 +869,6 @@ export default function Wine() {
   // Phase 1: Outer architectural 1px white lines
   const topVertLineP = stage(progress, 0.0, 0.24)
   const topHorizLineP = stage(progress, 0.06, 0.36)
-  const bottomHorizLineP = stage(progress, 0.56, 0.88)
-  const bottomVertLineP = stage(progress, 0.68, 0.96)
 
   // Phase 2: Section Heading ("I Nostri Vini")
   const titleP = stage(progress, 0.14, 0.5)
@@ -1467,6 +1464,7 @@ export default function Wine() {
         <button
           type="button"
           disabled={activeCard === 'blue'}
+          onClick={() => onOpenWip?.('shop')}
           style={{
             left: `${BASE_RED_LEFT_PCT}%`,
             top: `${(424 / CANVAS_H) * 100}%`,
@@ -1505,34 +1503,6 @@ export default function Wine() {
             {t.wine.buyBtn}
           </span>
         </button>
-
-        {/* 5A. Bottom-right horizontal 1px white line extending all the way to the right edge of the webpage */}
-        <div
-          aria-hidden="true"
-          style={{
-            left: `${BOTTOM_LINE_X_PCT}%`,
-            right: 'calc(50% - 50vw)',
-            top: `${(469.5 / CANVAS_H) * 100}%`,
-            transformOrigin: 'left center',
-            transform: `scaleX(${bottomHorizLineP})`,
-            opacity: bottomHorizLineP > 0.005 ? 1 : 0,
-          }}
-          className="pointer-events-none absolute z-20 h-px bg-white/65"
-        />
-
-        {/* 5B. Bottom-right vertical 1px white line reaching the bottom edge of the webpage */}
-        <div
-          aria-hidden="true"
-          style={{
-            left: `${BOTTOM_LINE_X_PCT}%`,
-            top: `${(469.5 / CANVAS_H) * 100}%`,
-            bottom: '0%',
-            transformOrigin: 'center top',
-            transform: `scaleY(${bottomVertLineP})`,
-            opacity: bottomVertLineP > 0.005 ? 1 : 0,
-          }}
-          className="pointer-events-none absolute z-20 w-px bg-white/65"
-        />
       </div>
     </section>
   )

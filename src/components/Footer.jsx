@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../i18n/useLanguage'
 
 const CANVAS_W = 1045
-const CANVAS_H = 190
+const WINE_BOTTOM_OFFSET_H = 42.5
+const CANVAS_H = 190 + WINE_BOTTOM_OFFSET_H
 
-// Exact horizontal coordinate of the bottom vertical line in Wine.jsx (604.5 / 1045)
+// Exact horizontal coordinate of the stepped architectural connector line (604.5 / 1045)
 const TOP_LINE_X_PCT = (604.5 / CANVAS_W) * 100
-const TOP_HORIZ_LINE_Y_PCT = (22 / CANVAS_H) * 100
+const TOP_RIGHT_HORIZ_LINE_Y_PCT = (0.5 / CANVAS_H) * 100
+const TOP_LEFT_HORIZ_LINE_Y_PCT = ((22 + WINE_BOTTOM_OFFSET_H) / CANVAS_H) * 100
+const COL_TOP_PCT = ((76 + WINE_BOTTOM_OFFSET_H) / CANVAS_H) * 100
+const COL_HEIGHT_PCT = (66 / CANVAS_H) * 100
 
 function clamp01(val) {
   return Math.max(0, Math.min(1, val))
@@ -78,19 +82,20 @@ export default function Footer() {
     }
   }, [])
 
-  // Architectural top connector lines
-  const topVertP = stage(progress, 0.0, 0.35)
-  const topHorizP = stage(progress, 0.1, 0.52)
+  // Architectural top connector lines (moved from Wine.jsx bottom + Footer.jsx top)
+  const topRightHorizP = stage(progress, 0.0, 0.28)
+  const topVertP = stage(progress, 0.08, 0.42)
+  const topLeftHorizP = stage(progress, 0.2, 0.56)
 
   // 3 Columns reveal stages
-  const col1LineP = stage(progress, 0.22, 0.62)
-  const col1TextP = stage(progress, 0.28, 0.72)
+  const col1LineP = stage(progress, 0.28, 0.66)
+  const col1TextP = stage(progress, 0.34, 0.74)
 
-  const col2LineP = stage(progress, 0.34, 0.74)
-  const col2TextP = stage(progress, 0.4, 0.84)
+  const col2LineP = stage(progress, 0.38, 0.76)
+  const col2TextP = stage(progress, 0.44, 0.86)
 
-  const col3LineP = stage(progress, 0.46, 0.86)
-  const col3TextP = stage(progress, 0.52, 0.96)
+  const col3LineP = stage(progress, 0.48, 0.88)
+  const col3TextP = stage(progress, 0.54, 0.96)
 
   return (
     <footer
@@ -98,14 +103,28 @@ export default function Footer() {
       id="contattaci"
       className="relative w-full bg-[linear-gradient(180deg,#141111_0%,#241B19_32%,#3A2622_68%,#4A2F29_100%)] text-[#FFF9EE] select-none overflow-hidden"
     >
-      <div className="relative mx-auto w-full max-w-[1440px] aspect-[1045/190]">
-        {/* 1A. Top vertical 1px white line continuing seamlessly from Wine.jsx's bottom vertical line */}
+      <div className="relative mx-auto w-full max-w-[1440px] aspect-[1045/232.5]">
+        {/* 1A. Top-right horizontal 1px white line extending all the way to the right edge of the webpage */}
         <div
           aria-hidden="true"
           style={{
             left: `${TOP_LINE_X_PCT}%`,
-            top: '0%',
-            height: `${TOP_HORIZ_LINE_Y_PCT}%`,
+            right: 'calc(50% - 50vw)',
+            top: `${TOP_RIGHT_HORIZ_LINE_Y_PCT}%`,
+            transformOrigin: 'left center',
+            transform: `scaleX(${topRightHorizP})`,
+            opacity: topRightHorizP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute z-20 h-px bg-white/65"
+        />
+
+        {/* 1B. Top vertical 1px white line uniting the top-right and top-left horizontal lines */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${TOP_LINE_X_PCT}%`,
+            top: `${TOP_RIGHT_HORIZ_LINE_Y_PCT}%`,
+            height: `${TOP_LEFT_HORIZ_LINE_Y_PCT - TOP_RIGHT_HORIZ_LINE_Y_PCT}%`,
             transformOrigin: 'center top',
             transform: `scaleY(${topVertP})`,
             opacity: topVertP > 0.005 ? 1 : 0,
@@ -113,16 +132,16 @@ export default function Footer() {
           className="pointer-events-none absolute z-20 w-px bg-white/65"
         />
 
-        {/* 1B. Top-left horizontal 1px white line extending from the left edge of the viewport to the vertical line */}
+        {/* 1C. Top-left horizontal 1px white line extending from the left edge of the viewport to the vertical line */}
         <div
           aria-hidden="true"
           style={{
             left: 'calc(50% - 50vw)',
             right: `${100 - TOP_LINE_X_PCT}%`,
-            top: `${TOP_HORIZ_LINE_Y_PCT}%`,
+            top: `${TOP_LEFT_HORIZ_LINE_Y_PCT}%`,
             transformOrigin: 'right center',
-            transform: `scaleX(${topHorizP})`,
-            opacity: topHorizP > 0.005 ? 1 : 0,
+            transform: `scaleX(${topLeftHorizP})`,
+            opacity: topLeftHorizP > 0.005 ? 1 : 0,
           }}
           className="pointer-events-none absolute z-20 h-px bg-white/65"
         />
@@ -131,8 +150,8 @@ export default function Footer() {
         <div
           style={{
             left: `${(24 / CANVAS_W) * 100}%`,
-            top: `${(76 / CANVAS_H) * 100}%`,
-            height: `${(66 / CANVAS_H) * 100}%`,
+            top: `${COL_TOP_PCT}%`,
+            height: `${COL_HEIGHT_PCT}%`,
           }}
           className="absolute flex items-start"
         >
@@ -168,8 +187,8 @@ export default function Footer() {
         <div
           style={{
             left: `${(374 / CANVAS_W) * 100}%`,
-            top: `${(76 / CANVAS_H) * 100}%`,
-            height: `${(66 / CANVAS_H) * 100}%`,
+            top: `${COL_TOP_PCT}%`,
+            height: `${COL_HEIGHT_PCT}%`,
           }}
           className="absolute flex items-start"
         >
@@ -211,8 +230,8 @@ export default function Footer() {
         <div
           style={{
             left: `${(720 / CANVAS_W) * 100}%`,
-            top: `${(76 / CANVAS_H) * 100}%`,
-            height: `${(66 / CANVAS_H) * 100}%`,
+            top: `${COL_TOP_PCT}%`,
+            height: `${COL_HEIGHT_PCT}%`,
           }}
           className="absolute flex items-start"
         >

@@ -6,13 +6,14 @@ const MENU_ITEMS = [
   { id: 'vini', href: '#vini' },
   { id: 'territorio', href: '#territorio' },
   { id: 'azienda', href: '#azienda' },
+  { id: 'eventi', href: '#eventi' },
 ]
 
-// 4 fixed angular slots (in degrees) surrounding the outer red circle:
+// 5 fixed angular slots (in degrees) surrounding the outer red circle:
 // 0° = directly left of the outer circle's center (in line with the middle of the hero text)
 // +90° = directly above the outer circle's center
 // -90° = directly below the outer circle's center
-const SLOT_ANGLES = [68, 26, -6, -46]
+const SLOT_ANGLES = [64, 32, 0, -32, -64]
 const ANIMATION_DURATION_MS = 900
 
 function easeInOutCubic(t) {
@@ -21,9 +22,9 @@ function easeInOutCubic(t) {
 
 export default function MenuWheel({ onNavigate, isLoaded = true }) {
   const { t } = useLanguage()
-  // itemSlots[i] holds which slot (0..3) MENU_ITEMS[i] currently occupies.
-  // Initially: Contattaci=0, Vini=1, Territorio=2 (Center, white), Azienda=3
-  const [itemSlots, setItemSlots] = useState([0, 1, 2, 3])
+  // itemSlots[i] holds which slot (0..4) MENU_ITEMS[i] currently occupies.
+  // Initially: Contattaci=0, Vini=1, Territorio=2 (Center, white), Azienda=3, Eventi=4
+  const [itemSlots, setItemSlots] = useState([0, 1, 2, 3, 4])
   // currentAngles[i] holds the live animated angle (in degrees) for each item
   const [currentAngles, setCurrentAngles] = useState(SLOT_ANGLES)
   const [hoveredId, setHoveredId] = useState(null)
@@ -42,6 +43,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
     e.preventDefault()
     if (isAnimating) return
 
+    const totalSlots = MENU_ITEMS.length
     const clickedSlot = itemSlots[clickedIndex]
 
     // Determine how many slots to shift so the clicked item lands on Center slot (2)
@@ -52,13 +54,15 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
       shift = 1 // Move 1 step down along the front arc into Center
     } else if (clickedSlot === 3) {
       shift = -1 // Move 1 step up along the front arc into Center
+    } else if (clickedSlot === 4) {
+      shift = -2 // Move 2 steps up along the front arc into Center
     } else {
-      shift = 4 // Already in Center: perform a full 360° loop around the circle
+      shift = totalSlots // Already in Center: perform a full 360° loop around the circle
     }
 
     const startAngles = itemSlots.map((slot) => SLOT_ANGLES[slot])
     const targetSlots = itemSlots.map(
-      (slot) => ((slot + shift) % 4 + 4) % 4
+      (slot) => ((slot + shift) % totalSlots + totalSlots) % totalSlots
     )
 
     const endAngles = itemSlots.map((oldSlot, idx) => {
@@ -66,18 +70,18 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
       const newSlot = targetSlots[idx]
       let endAngle = SLOT_ANGLES[newSlot]
 
-      if (shift === 4) {
+      if (shift === totalSlots) {
         return startAngle - 360
       }
 
       if (shift > 0) {
-        // Moving downward along the left arc (angles decrease: 68 -> 26 -> -6 -> -46)
+        // Moving downward along the left arc (angles decrease: 64 -> 32 -> 0 -> -32 -> -64)
         // Items that wrap from the bottom back to the top loop around the circle (-360°)
-        if (oldSlot + shift >= 4) {
+        if (oldSlot + shift >= totalSlots) {
           endAngle -= 360
         }
       } else {
-        // Moving upward along the left arc (angles increase: -46 -> -6 -> 26 -> 68)
+        // Moving upward along the left arc (angles increase: -64 -> -32 -> 0 -> 32 -> 64)
         // Items that wrap from the top back to the bottom loop around the circle (+360°)
         if (oldSlot + shift < 0) {
           endAngle += 360
@@ -136,7 +140,10 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
 
   return (
     <div
-      className="pointer-events-none absolute right-0 top-[54%] -translate-y-1/2 z-20 h-0 w-0 select-none"
+      style={{
+        '--wheel-unit': 'clamp(0.68px, min(0.148dvh, 0.092vw), 1.25px)',
+      }}
+      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-20 h-0 w-0 select-none"
       aria-label={t.menuWheel.ariaLabel}
     >
       {/* Shared coordinate origin aligned vertically in line with the Hero text */}
@@ -147,6 +154,10 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
           height="440"
           viewBox="-220 -220 220 440"
           fill="none"
+          style={{
+            width: 'calc(220 * var(--wheel-unit))',
+            height: 'calc(440 * var(--wheel-unit))',
+          }}
           className="absolute right-0 top-0 -translate-y-1/2 overflow-visible"
           aria-hidden="true"
         >
@@ -167,7 +178,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
           ))}
         </svg>
 
-        {/* 4 Anchor Links appearing sequentially from top-right ("Contattaci") down to "Azienda" */}
+        {/* 5 Anchor Links appearing sequentially from top-right ("Contattaci") down to "Eventi" */}
         {MENU_ITEMS.map((item, index) => {
           const angleDeg = currentAngles[index]
           const angleRad = (angleDeg * Math.PI) / 180
@@ -181,14 +192,14 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
           const label = t.menuWheel.items[item.id] ?? item.id
 
           // Stagger after left-side texts (which run at 750ms..1170ms):
-          // Contattaci (1310ms) -> Vini (1450ms) -> Territorio (1590ms) -> Azienda (1730ms)
+          // Contattaci (1310ms) -> Vini (1450ms) -> Territorio (1590ms) -> Azienda (1730ms) -> Eventi (1870ms)
           const entranceDelayMs = 1310 + index * 140
 
           return (
             <div
               key={item.id}
               style={{
-                transform: `translate3d(${x}px, ${y}px, 0)`,
+                transform: `translate3d(calc(${x.toFixed(2)} * var(--wheel-unit)), calc(${y.toFixed(2)} * var(--wheel-unit)), 0)`,
               }}
               className="pointer-events-auto absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2"
             >
@@ -205,11 +216,12 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
                   onMouseEnter={() => setHoveredId(item.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   style={{
+                    fontSize: 'calc(31 * var(--wheel-unit))',
                     transform: isHighlighted ? 'scale(1.15)' : 'scale(1)',
                     transition:
                       'color 250ms ease, transform 250ms ease, text-shadow 250ms ease',
                   }}
-                  className={`block cursor-pointer whitespace-nowrap font-sans text-2xl sm:text-[28px] md:text-[31px] font-bold tracking-tight ${
+                  className={`block cursor-pointer whitespace-nowrap font-sans font-bold tracking-tight ${
                     isHighlighted
                       ? 'text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.35)]'
                       : 'text-[#6A717A]/85'

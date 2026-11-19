@@ -3,6 +3,11 @@ export const TRANSLATIONS = {
     loading: {
       ariaLabel: 'Caricamento in corso',
       caption: 'giusto qualche secondo...',
+      ageQuestion: 'Hai più di 18 anni?',
+      ageYes: 'Sì',
+      ageNo: 'No',
+      underageMessage:
+        'Ci dispiace, devi avere almeno 18 anni per accedere al sito.',
     },
     hero: {
       conjunction: 'e',
@@ -15,6 +20,7 @@ export const TRANSLATIONS = {
         vini: 'Vini',
         territorio: 'Territorio',
         azienda: 'Azienda',
+        eventi: 'Eventi',
       },
     },
     terroir: {
@@ -91,6 +97,32 @@ export const TRANSLATIONS = {
       merlotBottleAlt: 'Bottiglia Il Merlot 2023',
       comingSoonBottleAlt: 'Prossimo vino in arrivo',
     },
+    events: {
+      conjunction: 'e',
+      title: 'le nostre esperienze',
+      subtitleLine1:
+        "A La Glia diamo molto valore all'esperienza, molto più che al",
+      subtitleLine2: 'valore del prodotto in sé.',
+      cards: {
+        cellar: {
+          title: 'Visita la Cantina',
+          bullets: ['lorem ipsum', 'lorem ipsum', 'lorem ipsum'],
+          people: '1-10 persone',
+          price: '20€ cad.',
+          languages: 'lingue IT | EN',
+        },
+        tasting: {
+          title: 'Degustazioni',
+          bullets: ['lorem ipsum', 'lorem ipsum', 'lorem ipsum'],
+          people: '2-8 persone',
+          price: '25€ cad.',
+          languages: 'lingue IT | EN',
+        },
+      },
+      bottomTextLine1: 'lorem ipsum dolor sit amet,',
+      bottomTextLine2: 'sbabolli galoppi cartani',
+      bookBtn: 'Prenota',
+    },
     footer: {
       estateHeader: 'TENUTA',
       countryLine: '52014 Poppi AR - Italia',
@@ -100,11 +132,24 @@ export const TRANSLATIONS = {
     scrollToTop: {
       label: 'Torna su',
     },
+    wip: {
+      titleLine1: 'Ci Scusiamo per il disagio!',
+      titleLine2: 'Questa pagina è ancora in costruzione',
+      bodyLine1: 'Per ordini o prenotazioni vi preghiamo di contattarci',
+      bodyLine2Prefix: 'via mail a ',
+      bodyLine3Prefix: 'oppure con un messaggio a ',
+      closeBtn: 'CHIUDI',
+    },
   },
   en: {
     loading: {
       ariaLabel: 'Loading',
       caption: 'just a few seconds...',
+      ageQuestion: 'Are you over 18?',
+      ageYes: 'Yes',
+      ageNo: 'No',
+      underageMessage:
+        'Sorry, you must be at least 18 years old to enter this site.',
     },
     hero: {
       conjunction: '&',
@@ -117,6 +162,7 @@ export const TRANSLATIONS = {
         vini: 'Wines',
         territorio: 'Terroir',
         azienda: 'The Estate',
+        eventi: 'Events',
       },
     },
     terroir: {
@@ -193,6 +239,32 @@ export const TRANSLATIONS = {
       merlotBottleAlt: 'Il Merlot 2023 bottle',
       comingSoonBottleAlt: 'Upcoming wine coming soon',
     },
+    events: {
+      conjunction: '&',
+      title: 'our experiences',
+      subtitleLine1:
+        'At La Glia we place great value on the experience, far more than on',
+      subtitleLine2: 'the value of the product itself.',
+      cards: {
+        cellar: {
+          title: 'Cellar Tour',
+          bullets: ['lorem ipsum', 'lorem ipsum', 'lorem ipsum'],
+          people: '1-10 guests',
+          price: '20€ ea.',
+          languages: 'lang IT | EN',
+        },
+        tasting: {
+          title: 'Wine Tastings',
+          bullets: ['lorem ipsum', 'lorem ipsum', 'lorem ipsum'],
+          people: '2-8 guests',
+          price: '25€ ea.',
+          languages: 'lang IT | EN',
+        },
+      },
+      bottomTextLine1: 'lorem ipsum dolor sit amet,',
+      bottomTextLine2: 'sbabolli galoppi cartani',
+      bookBtn: 'Book Now',
+    },
     footer: {
       estateHeader: 'ESTATE',
       countryLine: '52014 Poppi AR - Italy',
@@ -201,6 +273,14 @@ export const TRANSLATIONS = {
     },
     scrollToTop: {
       label: 'Back to top',
+    },
+    wip: {
+      titleLine1: 'We apologize for the inconvenience!',
+      titleLine2: 'This page is still under construction',
+      bodyLine1: 'For orders or bookings please contact us',
+      bodyLine2Prefix: 'by email at ',
+      bodyLine3Prefix: 'or with a message to ',
+      closeBtn: 'CLOSE',
     },
   },
 }
