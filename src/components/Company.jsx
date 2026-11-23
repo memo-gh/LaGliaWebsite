@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import vineyardImg from '../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
 import { useLanguage } from '../i18n/useLanguage'
+import CompanyMobile from './CompanyMobile'
 
 const CANVAS_W = 1257
 const CANVAS_H = 639
@@ -127,8 +128,36 @@ const SLIDES = [
 ]
 
 const CAROUSEL_JUMP_DELAY_MS = 420
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
+
+function getIsMobileViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches
+}
 
 export default function Company() {
+  const [isMobile, setIsMobile] = useState(getIsMobileViewport)
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MEDIA_QUERY)
+    const handleChange = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
+
+  if (isMobile) {
+    return (
+      <CompanyMobile
+        slides={SLIDES}
+        topLeftLineXPct={TERROIR_BOTTOM_LEFT_LINE_X_PCT}
+      />
+    )
+  }
+
+  return <CompanyDesktop />
+}
+
+function CompanyDesktop() {
   const { t } = useLanguage()
   const sectionRef = useRef(null)
   const viewportRef = useRef(null)

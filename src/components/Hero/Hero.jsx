@@ -51,13 +51,13 @@ export default function Hero({
           alt="La Glia vineyard landscape"
           className="h-full w-full object-cover object-bottom"
         />
-        <div className="absolute inset-0 bg-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/35 md:bg-black/10 md:bg-none" />
       </div>
 
-      {/* Left Column: Header + Main Stacked Display Typography vertically centered in line with MenuWheel */}
-      <div className="relative z-10 flex h-full w-full flex-col justify-center pl-[clamp(1rem,2.8vw,3rem)] pr-6">
-        {/* Header: La Glia Logo (drawn top-to-bottom) + "LA GLIA winery" (appears at 1170ms) */}
-        <header className="-ml-[clamp(0.35rem,1.1vw,1.35rem)] flex items-end gap-[clamp(0.65rem,1.2vw,1.5rem)]">
+      {/* Hero Typography: Top-centered on mobile (< md), left-aligned & vertically centered on tablet/desktop (md+) */}
+      <div className="relative z-10 flex h-full w-full flex-col items-center justify-start px-5 pt-[clamp(4.25rem,12.5dvh,7.5rem)] text-center sm:pt-[clamp(4.5rem,11.5dvh,7.5rem)] md:items-start md:justify-center md:pt-0 md:pl-[clamp(1.25rem,3vw,2.5rem)] md:pr-6 md:text-left lg:pl-[clamp(1rem,2.8vw,3rem)]">
+        {/* Header: La Glia Logo (drawn top-to-bottom) + "LA GLIA | Azienda Agricola" (appears at 1170ms) */}
+        <header className="flex items-center justify-center gap-[clamp(0.5rem,2.2vw,1rem)] md:-ml-[clamp(0.35rem,0.9vw,1rem)] md:items-end md:justify-start md:gap-[clamp(0.6rem,1.1vw,1.25rem)] lg:-ml-[clamp(0.35rem,1.1vw,1.35rem)] lg:gap-[clamp(0.65rem,1.2vw,1.5rem)]">
           <img
             src={coloredLaGliaLogo}
             alt="La Glia logo"
@@ -65,7 +65,7 @@ export default function Hero({
               clipPath: isLoaded ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
               transition: 'clip-path 750ms cubic-bezier(0.22, 1, 0.36, 1) 0ms',
             }}
-            className="h-[clamp(2.25rem,4.2vw,5.25rem)] w-[clamp(2.25rem,4.2vw,5.25rem)] object-contain shrink-0"
+            className="h-[clamp(2rem,8.5vw,3.25rem)] w-[clamp(2rem,8.5vw,3.25rem)] shrink-0 object-contain md:h-[clamp(2.25rem,4vw,3.75rem)] md:w-[clamp(2.25rem,4vw,3.75rem)] lg:h-[clamp(2.25rem,4.2vw,5.25rem)] lg:w-[clamp(2.25rem,4.2vw,5.25rem)]"
           />
           <span
             style={{
@@ -76,15 +76,15 @@ export default function Hero({
               transition:
                 'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 1170ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 1170ms',
             }}
-            className="font-serif text-[clamp(1.1rem,2.1vw,2.75rem)] font-normal tracking-wide text-white leading-none pb-[0.12em]"
+            className="font-serif text-[clamp(0.95rem,4vw,1.6rem)] font-normal leading-none tracking-wide text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.3)] md:pb-[0.12em] md:text-[clamp(1.1rem,2vw,1.85rem)] md:[text-shadow:none] lg:text-[clamp(1.1rem,2.1vw,2.75rem)]"
           >
             LA GLIA | Azienda Agricola
           </span>
         </header>
 
-        {/* Main Typography: "Tra Scienza" and "e Design" scaling dynamically with viewport */}
-        <div className="mt-[clamp(0.75rem,1.6vw,1.75rem)]">
-          <h1 className="font-sans font-bold text-white text-[clamp(3.2rem,9.4vw,13rem)] leading-[1.04] tracking-[-0.025em]">
+        {/* Main Typography: "Tra Scienza" and "e Design" scaling dynamically across breakpoints */}
+        <div className="mt-[clamp(0.65rem,2dvh,1.25rem)] md:mt-[clamp(0.75rem,1.6vw,1.75rem)]">
+          <h1 className="font-sans text-[clamp(2.45rem,min(12.2vw,7.4dvh),4.25rem)] font-bold leading-[1.04] tracking-[-0.025em] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.28)] sm:text-[clamp(3.25rem,min(10.5vw,8dvh),5rem)] md:text-[clamp(3rem,7.8vw,5.25rem)] md:[text-shadow:none] lg:text-[clamp(3.5rem,8.4vw,7.5rem)] xl:text-[clamp(3.2rem,9.4vw,13rem)]">
             {/* Line 1: "Tra Scienza" */}
             <span
               style={{
@@ -101,7 +101,7 @@ export default function Hero({
             </span>
 
             {/* Line 2: "e" / "&" (italic serif in #BD3B28 with its own delay) + "Design" on the same line */}
-            <span className="flex items-baseline gap-[clamp(0.6rem,1.4vw,1.6rem)] whitespace-nowrap">
+            <span className="flex items-baseline justify-center gap-[clamp(0.45rem,2vw,1rem)] whitespace-nowrap md:justify-start md:gap-[clamp(0.6rem,1.4vw,1.6rem)]">
               <span
                 style={{
                   opacity: isLoaded ? 1 : 0,
@@ -133,7 +133,7 @@ export default function Hero({
         </div>
       </div>
 
-      {/* Bottom-Left Language Toggle (ITA default / ENG) */}
+      {/* Language Toggle: Top-right on mobile (< md) to clear the bottom wheel, bottom-left on tablet/desktop (md+) */}
       <div
         style={{
           opacity: isLoaded ? 1 : 0,
@@ -143,7 +143,7 @@ export default function Hero({
           transition:
             'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1) 1350ms, transform 520ms cubic-bezier(0.22, 1, 0.36, 1) 1350ms',
         }}
-        className="absolute bottom-[clamp(1.25rem,2.8vw,2.5rem)] left-[clamp(1rem,2.8vw,3rem)] z-20 flex items-center gap-3"
+        className="absolute top-[clamp(0.85rem,2.2dvh,1.5rem)] right-[clamp(1rem,4vw,1.75rem)] z-20 flex items-center gap-3 md:top-auto md:right-auto md:bottom-[clamp(1.25rem,2.8vw,2.5rem)] md:left-[clamp(1rem,2.8vw,3rem)]"
       >
         <div
           role="group"
@@ -191,7 +191,7 @@ export default function Hero({
         </div>
       </div>
 
-      {/* Right Navigation Wheel aligned in line with the Hero text */}
+      {/* Navigation Wheel: bottom-centered on mobile (< md), right-aligned on tablet/desktop (md+) */}
       <MenuWheel onNavigate={handleNavigate} isLoaded={isLoaded} />
     </section>
   )

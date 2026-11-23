@@ -355,7 +355,7 @@ export default function Footer() {
 
               {/* GitHub */}
               <a
-                href="https://github.com"
+                href="https://github.com/memo-gh/"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="GitHub"

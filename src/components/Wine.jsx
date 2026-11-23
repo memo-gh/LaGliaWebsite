@@ -6,6 +6,7 @@ import wineBarIcon from '../assets/wine_bar_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz
 import nutritionIcon from '../assets/nutrition_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import restaurantIcon from '../assets/restaurant_24dp_FFF9EE_FILL0_wght400_GRAD0_opsz24.svg'
 import { useLanguage } from '../i18n/useLanguage'
+import WineMobile from './WineMobile'
 
 const CANVAS_W = 1045
 const CANVAS_H = 512
@@ -222,7 +223,40 @@ function getLayoutConfig(active) {
   }
 }
 
+const COMPACT_WINE_QUERY = '(max-width: 1023px)'
+
+function getIsCompactWineViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(COMPACT_WINE_QUERY).matches
+}
+
 export default function Wine({ onOpenWip }) {
+  const [isCompact, setIsCompact] = useState(getIsCompactWineViewport)
+
+  useEffect(() => {
+    const mq = window.matchMedia(COMPACT_WINE_QUERY)
+    const handleChange = (e) => setIsCompact(e.matches)
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
+
+  if (isCompact) {
+    return (
+      <WineMobile
+        onOpenWip={onOpenWip}
+        descriptionLines={DESCRIPTION_LINES}
+        wineSpecs={WINE_SPECS}
+        comingSoonSpecs={COMING_SOON_SPECS}
+        detailCategories={DETAIL_CATEGORIES}
+        vinificazioneLines={VINIFICAZIONE_LINES}
+      />
+    )
+  }
+
+  return <WineDesktop onOpenWip={onOpenWip} />
+}
+
+function WineDesktop({ onOpenWip }) {
   const { t } = useLanguage()
   const sectionRef = useRef(null)
 
@@ -925,97 +959,93 @@ export default function Wine({ onOpenWip }) {
         ref={innerRef}
         style={{
           width: `${EXPANDED_WIDTH_PCT}cqw`,
-          opacity: innerOpacityRef.current[cardKey],
           pointerEvents: isExpanded ? 'auto' : 'none',
         }}
         className="relative h-full shrink-0"
       >
-        {/* Top Row: Wine Title ("Il Merlot" or "Prossimamente") */}
-        <h3
+        {/* Top Row: Flex container so Title, Year, Hairline, and "In Dettaglio >" never overlap */}
+        <div
           style={{
             left: `${(20 / RED_CARD_W) * 100}%`,
-            top: `${(24 / RED_CARD_H) * 100}%`,
-            opacity: wineNameP,
-            transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
+            right: `${((RED_CARD_W - 650) / RED_CARD_W) * 100}%`,
+            top: `${(22 / RED_CARD_H) * 100}%`,
           }}
-          className="absolute font-serif text-[clamp(20px,2.9vw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
+          className="absolute z-25 flex items-baseline gap-[clamp(10px,1.2cqw,18px)]"
         >
-          {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
-        </h3>
-
-        {/* Top Row: Year ("2023" on Red card, or "In Arrivo" badge on Coming Soon card) */}
-        {!isComingSoon && (
-          <span
+          <h3
             style={{
-              left: `${(168 / RED_CARD_W) * 100}%`,
-              top: `${(31 / RED_CARD_H) * 100}%`,
-              opacity: wineYearP,
-              transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
+              opacity: wineNameP,
+              transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
             }}
-            className="absolute font-serif text-[clamp(15px,2.05vw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
+            className="shrink-0 font-serif text-[clamp(24px,3.05cqw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
           >
-            2023
-          </span>
-        )}
+            {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
+          </h3>
 
-        {/* Top Row: Horizontal line */}
-        <div
-          aria-hidden="true"
-          style={{
-            left: `${((isComingSoon ? 286 : 242) / RED_CARD_W) * 100}%`,
-            top: `${(44 / RED_CARD_H) * 100}%`,
-            width: `${(((isComingSoon ? 497 : 497) - (isComingSoon ? 286 : 242)) / RED_CARD_W) * 100}%`,
-            transformOrigin: 'left center',
-            transform: `scaleX(${innerTopLineP})`,
-            opacity: innerTopLineP > 0.005 ? 1 : 0,
-          }}
-          className="pointer-events-none absolute h-px bg-[#FFF9EE]/60"
-        />
-
-        {/* Top Row: "In Dettaglio >" trigger on Red card, or "In Cantina" label on Coming Soon card */}
-        {isComingSoon ? (
-          <span
-            style={{
-              left: `${(517 / RED_CARD_W) * 100}%`,
-              top: `${(36.5 / RED_CARD_H) * 100}%`,
-              opacity: detailLinkP,
-              transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
-            }}
-            className="absolute z-25 inline-flex items-center gap-[0.3em] font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE]/80 leading-none tracking-[0.02em]"
-          >
-            {t.wine.inCellarBadge}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              animateDetailsToggle(cardKey, true)
-            }}
-            onMouseEnter={() => setHoveredDetailCard(cardKey)}
-            onMouseLeave={() => setHoveredDetailCard(null)}
-            style={{
-              left: `${(517 / RED_CARD_W) * 100}%`,
-              top: `${(36.5 / RED_CARD_H) * 100}%`,
-              opacity: detailLinkP,
-              transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
-            }}
-            className="absolute z-25 inline-flex items-center gap-[0.3em] bg-transparent border-0 p-0 font-serif text-[clamp(9px,1.02vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.02em] cursor-pointer"
-          >
-            <span>{t.wine.inDetailBtn}</span>
+          {!isComingSoon && (
             <span
               style={{
-                transform: isDetailHovered
-                  ? 'translateX(3px)'
-                  : 'translateX(0px)',
-                transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                opacity: wineYearP,
+                transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
               }}
-              className="inline-block font-normal"
+              className="shrink-0 font-serif text-[clamp(18px,2.2cqw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
             >
-              &gt;
+              2023
             </span>
-          </button>
-        )}
+          )}
+
+          {/* Horizontal line auto-filling remaining width cleanly */}
+          <div
+            aria-hidden="true"
+            style={{
+              transformOrigin: 'left center',
+              transform: `scaleX(${innerTopLineP})`,
+              opacity: innerTopLineP > 0.005 ? 1 : 0,
+            }}
+            className="pointer-events-none h-px flex-1 self-center bg-[#FFF9EE]/60"
+          />
+
+          {/* "In Dettaglio >" trigger on Red card, or "In Cantina" label on Coming Soon card */}
+          {isComingSoon ? (
+            <span
+              style={{
+                opacity: detailLinkP,
+                transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
+              }}
+              className="shrink-0 inline-flex items-center gap-[0.3em] font-serif text-[clamp(11px,1.1cqw,16px)] font-bold text-[#FFF9EE]/80 leading-none tracking-[0.02em] whitespace-nowrap"
+            >
+              {t.wine.inCellarBadge}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                animateDetailsToggle(cardKey, true)
+              }}
+              onMouseEnter={() => setHoveredDetailCard(cardKey)}
+              onMouseLeave={() => setHoveredDetailCard(null)}
+              style={{
+                opacity: detailLinkP,
+                transform: `translate3d(${(1 - detailLinkP) * 12}px, 0, 0)`,
+              }}
+              className="shrink-0 inline-flex items-center gap-[0.3em] bg-transparent border-0 p-0 font-serif text-[clamp(11px,1.1cqw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.02em] whitespace-nowrap cursor-pointer"
+            >
+              <span>{t.wine.inDetailBtn}</span>
+              <span
+                style={{
+                  transform: isDetailHovered
+                    ? 'translateX(3px)'
+                    : 'translateX(0px)',
+                  transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+                className="inline-block font-normal"
+              >
+                &gt;
+              </span>
+            </button>
+          )}
+        </div>
 
         {/* Left Vertical Line beside the description paragraph */}
         <div
@@ -1036,9 +1066,9 @@ export default function Wine({ onOpenWip }) {
           style={{
             left: `${(56 / RED_CARD_W) * 100}%`,
             top: `${(96 / RED_CARD_H) * 100}%`,
-            width: `${((365 - 56) / RED_CARD_W) * 100}%`,
+            width: `${((398 - 56) / RED_CARD_W) * 100}%`,
           }}
-          className="absolute font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
+          className="absolute font-serif text-[clamp(11px,1.22cqw,18px)] font-normal text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
         >
           {linesToRender.map((line, idx) => {
             const lineStart = 0.44 + idx * 0.032
@@ -1052,7 +1082,6 @@ export default function Wine({ onOpenWip }) {
                   opacity: lineP,
                   transform: `translate3d(0, ${(1 - lineP) * 12}px, 0)`,
                 }}
-                className="whitespace-nowrap"
               >
                 {line}
               </div>
@@ -1081,20 +1110,21 @@ export default function Wine({ onOpenWip }) {
             <div
               key={spec.id}
               style={{
-                left: `${(453 / RED_CARD_W) * 100}%`,
+                left: `${(445 / RED_CARD_W) * 100}%`,
                 top: `${(spec.topPx / RED_CARD_H) * 100}%`,
+                maxWidth: `${((656 - 445) / RED_CARD_W) * 100}%`,
                 opacity: specP,
                 transform: `translate3d(${(1 - specP) * 14}px, ${(1 - specP) * 8}px, 0)`,
               }}
-              className="absolute flex items-center gap-[clamp(5px,0.6vw,10px)] whitespace-nowrap"
+              className="absolute flex items-center gap-[clamp(6px,0.65cqw,10px)] whitespace-nowrap"
             >
               <img
                 src={spec.icon}
                 alt=""
                 aria-hidden="true"
-                className="h-[clamp(12px,1.35vw,21px)] w-[clamp(12px,1.35vw,21px)] shrink-0 object-contain"
+                className="h-[clamp(14px,1.45cqw,21px)] w-[clamp(14px,1.45cqw,21px)] shrink-0 object-contain"
               />
-              <span className="font-serif text-[clamp(9px,1.14vw,18px)] font-normal text-[#FFF9EE] leading-none tracking-[0.01em]">
+              <span className="truncate font-serif text-[clamp(11px,1.22cqw,18px)] font-normal text-[#FFF9EE] leading-none tracking-[0.01em]">
                 {spec.label}
               </span>
             </div>
@@ -1131,12 +1161,12 @@ export default function Wine({ onOpenWip }) {
             opacity: priceP,
             transform: `translate3d(-50%, ${(1 - priceP) * 10}px, 0)`,
           }}
-          className="pointer-events-none absolute z-20 font-serif italic text-[clamp(8px,0.92vw,14px)] font-normal text-[#FFF9EE]/75 leading-none tracking-[0.02em] whitespace-nowrap"
+          className="pointer-events-none absolute z-20 font-serif italic text-[clamp(9px,0.98cqw,14px)] font-normal text-[#FFF9EE]/75 leading-none tracking-[0.02em] whitespace-nowrap"
         >
           {isComingSoon ? t.wine.priceComingSoon : t.wine.priceMerlot}
         </span>
 
-        {/* Vertical Left-to-Right "I Dettagli" Card Overlay */}
+        {/* Vertical Left-to-Right "I Dettagli" Card Overlay (responsive 3-column grid to prevent overlap) */}
         <div
           ref={detailOverlayRef}
           onClick={(e) => {
@@ -1144,103 +1174,106 @@ export default function Wine({ onOpenWip }) {
             animateDetailsToggle(cardKey, false)
           }}
           style={{
-            clipPath: detailClipRef.current[cardKey],
             pointerEvents: isDetailOpen ? 'auto' : 'none',
           }}
-          className="absolute inset-0 z-30 bg-[#5A174F] cursor-pointer select-none overflow-hidden"
+          className="absolute inset-0 z-30 flex flex-col bg-[#5A174F] px-[6%] py-[4.5%] cursor-pointer select-none overflow-hidden"
           role="region"
           aria-label={t.wine.detailsRegionAria}
         >
           {/* Centered Top Heading: "I Dettagli" */}
           <h4
             data-detail-item
-            style={{
-              left: '50%',
-              top: `${(16 / RED_CARD_H) * 100}%`,
-              transform: 'translateX(-50%)',
-            }}
-            className="absolute font-serif text-[clamp(18px,2.55vw,38px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
+            className="text-center font-serif text-[clamp(22px,2.65cqw,38px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
           >
             {t.wine.detailsTitle}
           </h4>
 
-          {/* 2x2 Category Blocks (Left & Middle Columns) */}
-          {DETAIL_CATEGORIES.map((item) => (
-            <div key={item.id}>
+          {/* 3-Column Content Grid: 2 Category columns + Vinificazione column */}
+          <div className="my-auto grid grid-cols-[1fr_1fr_1.35fr] items-stretch gap-x-[4%] pt-[2%]">
+            {/* Left Category Column */}
+            <div className="flex flex-col justify-between gap-[clamp(14px,2cqw,28px)]">
+              {DETAIL_CATEGORIES.filter((item) => item.colIdx === 0).map(
+                (item) => (
+                  <div
+                    key={item.id}
+                    className="relative flex flex-col gap-[clamp(4px,0.55cqw,8px)] pl-[clamp(8px,0.9cqw,14px)]"
+                  >
+                    <div
+                      data-detail-line
+                      aria-hidden="true"
+                      style={{ transformOrigin: 'center top' }}
+                      className="pointer-events-none absolute inset-y-0 left-0 w-px bg-[#BD9EAF]/75"
+                    />
+                    <span
+                      data-detail-item
+                      className="font-serif text-[clamp(9px,0.98cqw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em]"
+                    >
+                      {t.wine.categoryLabel}
+                    </span>
+                    <span
+                      data-detail-item
+                      className="font-serif text-[clamp(11px,1.12cqw,16px)] font-bold text-[#FFF9EE] leading-tight tracking-[0.01em]"
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Middle Category Column */}
+            <div className="flex flex-col justify-between gap-[clamp(14px,2cqw,28px)]">
+              {DETAIL_CATEGORIES.filter((item) => item.colIdx === 1).map(
+                (item) => (
+                  <div
+                    key={item.id}
+                    className="relative flex flex-col gap-[clamp(4px,0.55cqw,8px)] pl-[clamp(8px,0.9cqw,14px)]"
+                  >
+                    <div
+                      data-detail-line
+                      aria-hidden="true"
+                      style={{ transformOrigin: 'center top' }}
+                      className="pointer-events-none absolute inset-y-0 left-0 w-px bg-[#BD9EAF]/75"
+                    />
+                    <span
+                      data-detail-item
+                      className="font-serif text-[clamp(9px,0.98cqw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em]"
+                    >
+                      {t.wine.categoryLabel}
+                    </span>
+                    <span
+                      data-detail-item
+                      className="font-serif text-[clamp(11px,1.12cqw,16px)] font-bold text-[#FFF9EE] leading-tight tracking-[0.01em]"
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Right Column: Tall Vertical Line + "VINIFICAZIONE" + Description */}
+            <div className="relative flex flex-col gap-[clamp(6px,0.75cqw,12px)] pl-[clamp(10px,1cqw,16px)]">
               <div
                 data-detail-line
                 aria-hidden="true"
-                style={{
-                  left: `${(item.lineLeft / RED_CARD_W) * 100}%`,
-                  top: `${(item.lineTop / RED_CARD_H) * 100}%`,
-                  height: `${(item.lineHeight / RED_CARD_H) * 100}%`,
-                  transformOrigin: 'center top',
-                }}
-                className="pointer-events-none absolute w-px bg-[#BD9EAF]/75"
+                style={{ transformOrigin: 'center top' }}
+                className="pointer-events-none absolute inset-y-0 left-0 w-px bg-[#BD9EAF]/75"
               />
               <span
                 data-detail-item
-                style={{
-                  left: `${(item.textLeft / RED_CARD_W) * 100}%`,
-                  top: `${(item.catTop / RED_CARD_H) * 100}%`,
-                }}
-                className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
+                className="font-serif text-[clamp(9px,0.98cqw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em]"
               >
-                {t.wine.categoryLabel}
+                {t.wine.vinificationLabel}
               </span>
-              <span
-                data-detail-item
-                style={{
-                  left: `${(item.textLeft / RED_CARD_W) * 100}%`,
-                  top: `${(item.valTop / RED_CARD_H) * 100}%`,
-                }}
-                className="absolute font-serif text-[clamp(9px,1.08vw,16px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
-              >
-                {item.value}
-              </span>
-            </div>
-          ))}
-
-          {/* Right Column: Tall Vertical Line + "VINIFICAZIONE" + 6-line Description */}
-          <div
-            data-detail-line
-            aria-hidden="true"
-            style={{
-              left: `${(530.6 / RED_CARD_W) * 100}%`,
-              top: `${(67.4 / RED_CARD_H) * 100}%`,
-              height: `${(167.9 / RED_CARD_H) * 100}%`,
-              transformOrigin: 'center top',
-            }}
-            className="pointer-events-none absolute w-px bg-[#BD9EAF]/75"
-          />
-
-          <span
-            data-detail-item
-            style={{
-              left: `${(543.4 / RED_CARD_W) * 100}%`,
-              top: `${(71 / RED_CARD_H) * 100}%`,
-            }}
-            className="absolute font-serif text-[clamp(8px,0.95vw,14px)] font-bold uppercase text-[#BD9EAF] leading-none tracking-[0.02em] whitespace-nowrap"
-          >
-            {t.wine.vinificationLabel}
-          </span>
-
-          <div
-            style={{
-              left: `${(538.3 / RED_CARD_W) * 100}%`,
-              top: `${(99 / RED_CARD_H) * 100}%`,
-            }}
-            className="absolute font-serif text-[clamp(9px,1.08vw,16px)] font-bold text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
-          >
-            {VINIFICAZIONE_LINES.map((line, idx) => (
-              <div
-                key={idx}
-                data-detail-item
-                className="whitespace-nowrap"
-              >
-                {line}
+              <div className="font-serif text-[clamp(10px,1.12cqw,16px)] font-bold text-[#FFF9EE] leading-[1.32] tracking-[0.01em]">
+                {VINIFICAZIONE_LINES.map((line, idx) => (
+                  <div key={idx} data-detail-item>
+                    {line}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
@@ -1264,7 +1297,7 @@ export default function Wine({ onOpenWip }) {
       {/* Uses the exact same max-w-[1440px] centered coordinate space as Company.jsx so the top vertical line aligns 1:1 */}
       <div
         style={{ containerType: 'inline-size' }}
-        className="relative mx-auto w-full max-w-[1440px] min-h-dvh aspect-[1045/512]"
+        className="relative mx-auto w-full max-w-[1440px] aspect-[1045/512]"
       >
         {/* 1A. Top vertical 1px white line aligned with Company.jsx's bottom vertical line (532.5 / 1257) */}
         <div
@@ -1303,7 +1336,7 @@ export default function Wine({ onOpenWip }) {
             transform: `translate3d(${(1 - titleP) * -16}px, ${(1 - titleP) * 20}px, 0)`,
             clipPath: `inset(-15% ${(1 - titleP) * 100}% -15% 0)`,
           }}
-          className="absolute font-serif text-[clamp(22px,3.1vw,46px)] font-bold text-white leading-none tracking-[0.01em]"
+          className="absolute font-serif text-[clamp(26px,3.2cqw,46px)] font-bold text-white leading-none tracking-[0.01em] whitespace-nowrap"
         >
           {t.wine.sectionTitle}
         </h2>
@@ -1473,7 +1506,7 @@ export default function Wine({ onOpenWip }) {
             opacity: buyBtnP * (activeCard === 'blue' ? 0.5 : 1),
             transform: `translate3d(0, ${(1 - buyBtnP) * 18}px, 0)`,
           }}
-          className={`absolute z-20 flex items-center justify-center gap-[clamp(6px,0.7vw,11px)] rounded-[clamp(10px,1.2vw,16px)] border-0 bg-[#FFF9EE] text-[#1D1919] shadow-[0_6px_18px_rgba(0,0,0,0.25)] transition-all duration-300 ${
+          className={`absolute z-20 flex items-center justify-center gap-[clamp(6px,0.75cqw,11px)] rounded-[clamp(10px,1.2cqw,16px)] border-0 bg-[#FFF9EE] text-[#1D1919] shadow-[0_6px_18px_rgba(0,0,0,0.25)] transition-all duration-300 ${
             activeCard === 'blue'
               ? 'cursor-not-allowed'
               : 'cursor-pointer hover:scale-[1.03] hover:bg-white active:scale-[0.98]'
@@ -1484,7 +1517,7 @@ export default function Wine({ onOpenWip }) {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
-            className="h-[clamp(13px,1.35vw,19px)] w-[clamp(13px,1.35vw,19px)] shrink-0"
+            className="h-[clamp(13px,1.35cqw,19px)] w-[clamp(13px,1.35cqw,19px)] shrink-0"
           >
             <path
               d="M6 7.5H18L19 20.5H5L6 7.5Z"
@@ -1499,7 +1532,7 @@ export default function Wine({ onOpenWip }) {
               strokeLinecap="round"
             />
           </svg>
-          <span className="font-sans text-[clamp(10px,1.12vw,16px)] font-bold leading-none tracking-[0.01em]">
+          <span className="font-sans text-[clamp(11px,1.15cqw,16px)] font-bold leading-none tracking-[0.01em] whitespace-nowrap">
             {t.wine.buyBtn}
           </span>
         </button>
