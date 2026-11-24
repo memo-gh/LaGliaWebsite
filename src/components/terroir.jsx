@@ -7,8 +7,10 @@ const CANVAS_H = 629
 // Exact horizontal coordinate of the top-right vertical line in Company.jsx (1001.5 / 1257)
 // so the bottom-right vertical line in Terroir.jsx connects seamlessly across the section boundary.
 const COMPANY_TOP_RIGHT_LINE_X_PCT = (1001.5 / 1257) * 100
+const HEADER_LINE_LEFT_X_PCT = (175 / CANVAS_W) * 100
+const HEADER_LINE_TOP_Y_PCT = (56 / CANVAS_H) * 100
+const HEADER_LINE_Y_PCT = (164 / CANVAS_H) * 100
 const RIGHT_OUTER_LINE_X_PCT = (1009 / CANVAS_W) * 100
-const RIGHT_LINE_TOP_Y_PCT = (70 / CANVAS_H) * 100
 const RIGHT_LINE_STEP_Y_PCT = (534 / CANVAS_H) * 100
 
 const LEFT_CORNER_X_PCT = (21 / CANVAS_W) * 100
@@ -419,9 +421,11 @@ export default function Terroir() {
   const titleP = stage(progress, 0.04, 0.36)
   const subtitleP = stage(progress, 0.12, 0.44)
 
-  const rightLineVertTopP = stage(progress, 0.1, 0.5)
-  const rightLineHorizP = stage(progress, 0.42, 0.72)
-  const rightLineVertBottomP = stage(progress, 0.64, 0.96)
+  const headerLineVertP = stage(progress, 0.06, 0.24)
+  const headerLineHorizP = stage(progress, 0.18, 0.46)
+  const rightLineVertTopP = stage(progress, 0.38, 0.68)
+  const rightLineHorizP = stage(progress, 0.6, 0.8)
+  const rightLineVertBottomP = stage(progress, 0.74, 0.98)
 
   const leftCornerHorizP = stage(progress, 0.52, 0.8)
   const leftCornerVertP = stage(progress, 0.68, 0.98)
@@ -474,13 +478,41 @@ export default function Terroir() {
         id="territorio"
         className="relative mx-auto w-full max-w-[1440px] aspect-[1067/629] min-h-[420px]"
       >
-        {/* 1A. Right-side upper vertical 1px white line (x: 1009, y: 70 -> 534) */}
+        {/* 1A. Top-left vertical 1px white line beside the header (x: 175, y: 56 -> 164) */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${HEADER_LINE_LEFT_X_PCT}%`,
+            top: `${HEADER_LINE_TOP_Y_PCT}%`,
+            height: `${HEADER_LINE_Y_PCT - HEADER_LINE_TOP_Y_PCT}%`,
+            transformOrigin: 'center top',
+            transform: `scaleY(${headerLineVertP})`,
+            opacity: headerLineVertP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute z-20 w-px bg-white/65"
+        />
+
+        {/* 1B. Upper horizontal 1px white line under the header (x: 175 -> 1009, y: 164) */}
+        <div
+          aria-hidden="true"
+          style={{
+            left: `${HEADER_LINE_LEFT_X_PCT}%`,
+            top: `${HEADER_LINE_Y_PCT}%`,
+            width: `${RIGHT_OUTER_LINE_X_PCT - HEADER_LINE_LEFT_X_PCT}%`,
+            transformOrigin: 'left center',
+            transform: `scaleX(${headerLineHorizP})`,
+            opacity: headerLineHorizP > 0.005 ? 1 : 0,
+          }}
+          className="pointer-events-none absolute z-20 h-px bg-white/65"
+        />
+
+        {/* 1C. Right-side upper vertical 1px white line (x: 1009, y: 164 -> 534) */}
         <div
           aria-hidden="true"
           style={{
             left: `${RIGHT_OUTER_LINE_X_PCT}%`,
-            top: `${RIGHT_LINE_TOP_Y_PCT}%`,
-            height: `${RIGHT_LINE_STEP_Y_PCT - RIGHT_LINE_TOP_Y_PCT}%`,
+            top: `${HEADER_LINE_Y_PCT}%`,
+            height: `${RIGHT_LINE_STEP_Y_PCT - HEADER_LINE_Y_PCT}%`,
             transformOrigin: 'center top',
             transform: `scaleY(${rightLineVertTopP})`,
             opacity: rightLineVertTopP > 0.005 ? 1 : 0,
@@ -488,7 +520,7 @@ export default function Terroir() {
           className="pointer-events-none absolute z-20 w-px bg-white/65"
         />
 
-        {/* 1B. Right-side horizontal step 1px white line (x: Company line -> 1009, y: 534) */}
+        {/* 1D. Right-side horizontal step 1px white line (x: Company line -> 1009, y: 534) */}
         <div
           aria-hidden="true"
           style={{
@@ -502,7 +534,7 @@ export default function Terroir() {
           className="pointer-events-none absolute z-20 h-px bg-white/65"
         />
 
-        {/* 1C. Right-side lower vertical 1px white line connecting seamlessly into Company.jsx (y: 534 -> 629) */}
+        {/* 1E. Right-side lower vertical 1px white line connecting seamlessly into Company.jsx (y: 534 -> 629) */}
         <div
           aria-hidden="true"
           style={{

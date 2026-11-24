@@ -9,18 +9,22 @@ const MENU_ITEMS = [
   { id: 'eventi', href: '#eventi' },
 ]
 
-// Desktop/Tablet (md+, >= 768px): 5 fixed angular slots surrounding the right-edge semi-circle:
+// Desktop/Tablet (md+, >= 768px): 5 fixed angular slots surrounding the right-edge La Glia logo wheel:
 // 0° = directly left of the outer circle's center (in line with the middle of the hero text)
 // +90° = directly above the outer circle's center
 // -90° = directly below the outer circle's center
 const DESKTOP_SLOT_ANGLES = [64, 32, 0, -32, -64]
 
-// Mobile (< md, < 768px): 5 fixed angular slots arching over the bottom-centered semi-circle:
+// Mobile (< md, < 768px): 5 fixed angular slots arching over the bottom-centered wheel:
 // 0° = directly above the wheel's center (12 o'clock)
 // -90° = directly left along the bottom edge, +90° = directly right along the bottom edge
 const MOBILE_SLOT_ANGLES = [-66, -36, 0, 36, 66]
 
-const DESKTOP_ORBIT_RADIUS = 275
+// Shift the desktop/tablet wheel center left from the right edge so the nested
+// bottom convergence of the La Glia logo (coloredLaGliaLogo.svg) is clearly visible
+// along with its orbiting navigation labels.
+const DESKTOP_CENTER_OFFSET_X = 85
+const DESKTOP_ORBIT_RADIUS = 290
 const MOBILE_ORBIT_RX = 260
 const MOBILE_ORBIT_RY = 296
 
@@ -198,42 +202,41 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
     rafRef.current = requestAnimationFrame(tick)
   }
 
-  // Desktop circle centerline radii (matching 195px, 130px, 60px outer radii with 13px stroke)
-  const outerR = 188.5
-  const middleR = 123.5
-  const innerR = 53.5
-  const middleCy = outerR - middleR // 65
-  const innerCy = outerR - innerR // 135
-
-  const desktopArcs = [
-    { r: outerR, cy: 0, delayMs: 0 },
-    { r: middleR, cy: middleCy, delayMs: 120 },
-    { r: innerR, cy: innerCy, delayMs: 240 },
+  // Desktop circle centerline geometry matching coloredLaGliaLogo.svg (16px stroke):
+  // Three eccentric rings stacked flush at the bottom, shifted left so the full
+  // bottom convergence is visible while the right edge clips cleanly off-canvas.
+  const desktopRings = [
+    { r: 188.5, cy: 0, delayMs: 0 },
+    { r: 149, cy: 24, delayMs: 120 },
+    { r: 102.5, cy: 55, delayMs: 240 },
   ]
 
-  // Mobile concentric bottom-anchored semi-circles arching upward
+  // Mobile eccentric bottom-anchored arcs matching coloredLaGliaLogo.svg proportions
   const mobileArcs = [
-    { r: 152, delayMs: 0 },
-    { r: 100, delayMs: 120 },
-    { r: 43, delayMs: 240 },
+    { r: 152, cy: 0, delayMs: 0 },
+    { r: 120, cy: 19.5, delayMs: 120 },
+    { r: 82.5, cy: 44.5, delayMs: 240 },
   ]
 
   return (
     <div
       style={{
         '--wheel-unit': WHEEL_UNITS[viewportMode],
+        ...(isMobile
+          ? {}
+          : { right: `calc(${DESKTOP_CENTER_OFFSET_X} * var(--wheel-unit))` }),
       }}
       className={`pointer-events-none absolute z-20 h-0 w-0 select-none ${
         isMobile
           ? 'bottom-0 left-1/2 -translate-x-1/2'
-          : 'right-0 top-1/2 -translate-y-1/2'
+          : 'top-1/2 -translate-y-1/2'
       }`}
       aria-label={t.menuWheel.ariaLabel}
     >
-      {/* Shared coordinate origin: bottom-center on mobile, right-center on tablet/desktop */}
+      {/* Shared coordinate origin: bottom-center on mobile, shifted right-center on tablet/desktop */}
       <div className="relative h-0 w-0">
         {isMobile ? (
-          /* 3 Nested Red Semi-Circles flush against the bottom edge (y = 0) and drawn left-to-right */
+          /* 3 Nested Red Logo Arcs anchored at the bottom edge (y = 0) and drawn left-to-right */
           <svg
             width="440"
             height="220"
@@ -249,10 +252,10 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             {mobileArcs.map((arc, i) => (
               <path
                 key={i}
-                d={`M ${-arc.r} 0 A ${arc.r} ${arc.r} 0 0 1 ${arc.r} 0`}
+                d={`M ${-arc.r} ${arc.cy} A ${arc.r} ${arc.r} 0 0 1 ${arc.r} ${arc.cy}`}
                 pathLength="1"
                 stroke="#BD3B28"
-                strokeWidth="11"
+                strokeWidth="13"
                 strokeLinecap="butt"
                 style={{
                   strokeDasharray: 1,
@@ -263,31 +266,31 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             ))}
           </svg>
         ) : (
-          /* 3 Nested Red Semi-Circles flush against the right edge (x = 0) and drawn top-to-bottom */
+          /* 3 Nested Red Logo Circles shifted left from the right edge and drawn counter-clockwise top-to-bottom */
           <svg
-            width="220"
+            width="440"
             height="440"
-            viewBox="-220 -220 220 440"
+            viewBox="-220 -220 440 440"
             fill="none"
             style={{
-              width: 'calc(220 * var(--wheel-unit))',
+              width: 'calc(440 * var(--wheel-unit))',
               height: 'calc(440 * var(--wheel-unit))',
             }}
-            className="absolute right-0 top-0 -translate-y-1/2 overflow-visible"
+            className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
             aria-hidden="true"
           >
-            {desktopArcs.map((arc, i) => (
+            {desktopRings.map((ring, i) => (
               <path
                 key={i}
-                d={`M 0 ${arc.cy - arc.r} A ${arc.r} ${arc.r} 0 0 0 0 ${arc.cy + arc.r}`}
+                d={`M ${ring.r} ${ring.cy} A ${ring.r} ${ring.r} 0 1 0 ${-ring.r} ${ring.cy} A ${ring.r} ${ring.r} 0 1 0 ${ring.r} ${ring.cy}`}
                 pathLength="1"
                 stroke="#BD3B28"
-                strokeWidth="13"
+                strokeWidth="16"
                 strokeLinecap="butt"
                 style={{
                   strokeDasharray: 1,
                   strokeDashoffset: isLoaded ? 0 : 1,
-                  transition: `stroke-dashoffset 850ms cubic-bezier(0.22, 1, 0.36, 1) ${arc.delayMs}ms`,
+                  transition: `stroke-dashoffset 950ms cubic-bezier(0.22, 1, 0.36, 1) ${ring.delayMs}ms`,
                 }}
               />
             ))}
