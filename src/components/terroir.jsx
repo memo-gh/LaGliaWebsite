@@ -271,6 +271,7 @@ export default function Terroir() {
   const sectionRef = useRef(null)
   const targetProgressRef = useRef(0)
   const currentProgressRef = useRef(0)
+  const scheduleLoopRef = useRef(() => {})
   const [progress, setProgress] = useState(0)
 
   const cardRefs = useRef({
@@ -339,6 +340,7 @@ export default function Terroir() {
       state.targetX = bx
       state.targetY = by
       state.active = true
+      scheduleLoopRef.current()
     }
   }
 
@@ -351,6 +353,61 @@ export default function Terroir() {
 
   useEffect(() => {
     let rafId = null
+
+    const animateLoop = () => {
+      let needsNextFrame = false
+
+      const diff = targetProgressRef.current - currentProgressRef.current
+      if (Math.abs(diff) > 0.0004) {
+        const maxStep = 0.014
+        const damped = diff * 0.075
+        const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
+        currentProgressRef.current += step
+        setProgress(currentProgressRef.current)
+        needsNextFrame = true
+      } else if (currentProgressRef.current !== targetProgressRef.current) {
+        currentProgressRef.current = targetProgressRef.current
+        setProgress(currentProgressRef.current)
+      }
+
+      // Smoothly interpolate the highlighted border section and outer hue position along each card perimeter
+      ;['left', 'rightTop', 'rightBottom'].forEach((slotKey) => {
+        const state = borderGlowPosRef.current[slotKey]
+        const cardEl = cardRefs.current[slotKey]
+        if (!state || !cardEl) return
+        const dx = state.targetX - state.curX
+        const dy = state.targetY - state.curY
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+          state.curX += dx * 0.22
+          state.curY += dy * 0.22
+          cardEl.style.setProperty('--hx', `${state.curX.toFixed(1)}px`)
+          cardEl.style.setProperty('--hy', `${state.curY.toFixed(1)}px`)
+          needsNextFrame = true
+        } else if (
+          state.curX !== state.targetX ||
+          state.curY !== state.targetY
+        ) {
+          state.curX = state.targetX
+          state.curY = state.targetY
+          cardEl.style.setProperty('--hx', `${state.curX.toFixed(1)}px`)
+          cardEl.style.setProperty('--hy', `${state.curY.toFixed(1)}px`)
+        }
+      })
+
+      if (needsNextFrame) {
+        rafId = requestAnimationFrame(animateLoop)
+      } else {
+        rafId = null
+      }
+    }
+
+    const scheduleLoop = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(animateLoop)
+      }
+    }
+
+    scheduleLoopRef.current = scheduleLoop
 
     const computeScrollTarget = () => {
       const el = sectionRef.current
@@ -370,49 +427,25 @@ export default function Terroir() {
         raw = 1
       }
 
-      targetProgressRef.current = clamp01(raw)
-    }
-
-    const animateLoop = () => {
-      const diff = targetProgressRef.current - currentProgressRef.current
-      if (Math.abs(diff) > 0.0004) {
-        const maxStep = 0.014
-        const damped = diff * 0.075
-        const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
-        currentProgressRef.current += step
-        setProgress(currentProgressRef.current)
-      } else if (currentProgressRef.current !== targetProgressRef.current) {
-        currentProgressRef.current = targetProgressRef.current
-        setProgress(currentProgressRef.current)
+      const nextTarget = clamp01(raw)
+      if (
+        nextTarget !== targetProgressRef.current ||
+        currentProgressRef.current !== nextTarget
+      ) {
+        targetProgressRef.current = nextTarget
+        scheduleLoop()
       }
-
-      // Smoothly interpolate the highlighted border section and outer hue position along each card perimeter
-      ;['left', 'rightTop', 'rightBottom'].forEach((slotKey) => {
-        const state = borderGlowPosRef.current[slotKey]
-        const cardEl = cardRefs.current[slotKey]
-        if (!state || !cardEl) return
-        const dx = state.targetX - state.curX
-        const dy = state.targetY - state.curY
-        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-          state.curX += dx * 0.22
-          state.curY += dy * 0.22
-          cardEl.style.setProperty('--hx', `${state.curX.toFixed(1)}px`)
-          cardEl.style.setProperty('--hy', `${state.curY.toFixed(1)}px`)
-        }
-      })
-
-      rafId = requestAnimationFrame(animateLoop)
     }
 
     computeScrollTarget()
     window.addEventListener('scroll', computeScrollTarget, { passive: true })
     window.addEventListener('resize', computeScrollTarget, { passive: true })
-    rafId = requestAnimationFrame(animateLoop)
 
     return () => {
+      scheduleLoopRef.current = () => {}
       window.removeEventListener('scroll', computeScrollTarget)
       window.removeEventListener('resize', computeScrollTarget)
-      if (rafId) cancelAnimationFrame(rafId)
+      if (rafId !== null) cancelAnimationFrame(rafId)
     }
   }, [])
 

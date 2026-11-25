@@ -41,6 +41,30 @@ export default function WineMobile({
   useEffect(() => {
     let rafId = null
 
+    const animateLoop = () => {
+      const diff = targetProgressRef.current - currentProgressRef.current
+      if (Math.abs(diff) > 0.0004) {
+        const maxStep = 0.014
+        const damped = diff * 0.09
+        const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
+        currentProgressRef.current += step
+        setProgress(currentProgressRef.current)
+        rafId = requestAnimationFrame(animateLoop)
+      } else {
+        if (currentProgressRef.current !== targetProgressRef.current) {
+          currentProgressRef.current = targetProgressRef.current
+          setProgress(currentProgressRef.current)
+        }
+        rafId = null
+      }
+    }
+
+    const scheduleLoop = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(animateLoop)
+      }
+    }
+
     const computeScrollTarget = () => {
       const el = sectionRef.current
       if (!el) return
@@ -57,34 +81,24 @@ export default function WineMobile({
         raw = 1
       }
 
-      targetProgressRef.current = clamp01(raw)
-    }
-
-    const animateLoop = () => {
-      const diff = targetProgressRef.current - currentProgressRef.current
-      if (Math.abs(diff) > 0.0004) {
-        const maxStep = 0.014
-        const damped = diff * 0.09
-        const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
-        currentProgressRef.current += step
-        setProgress(currentProgressRef.current)
-      } else if (currentProgressRef.current !== targetProgressRef.current) {
-        currentProgressRef.current = targetProgressRef.current
-        setProgress(currentProgressRef.current)
+      const nextTarget = clamp01(raw)
+      if (
+        nextTarget !== targetProgressRef.current ||
+        currentProgressRef.current !== nextTarget
+      ) {
+        targetProgressRef.current = nextTarget
+        scheduleLoop()
       }
-
-      rafId = requestAnimationFrame(animateLoop)
     }
 
     computeScrollTarget()
     window.addEventListener('scroll', computeScrollTarget, { passive: true })
     window.addEventListener('resize', computeScrollTarget, { passive: true })
-    rafId = requestAnimationFrame(animateLoop)
 
     return () => {
       window.removeEventListener('scroll', computeScrollTarget)
       window.removeEventListener('resize', computeScrollTarget)
-      if (rafId) cancelAnimationFrame(rafId)
+      if (rafId !== null) cancelAnimationFrame(rafId)
     }
   }, [])
 

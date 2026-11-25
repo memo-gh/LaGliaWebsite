@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import vineyardImg from '../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
+import vineyardImg from '../assets/shrinked.webp'
 import { useLanguage } from '../i18n/useLanguage'
 import CompanyMobile from './CompanyMobile'
 
@@ -177,6 +177,11 @@ function CompanyDesktop() {
   const slideshowDelayTimerRef = useRef(null)
   const [isSlideshowActive, setIsSlideshowActive] = useState(false)
 
+  // Pause continuous marquee & Ken Burns whenever #azienda is outside the viewport
+  const isInViewRef = useRef(false)
+  const [isInView, setIsInView] = useState(false)
+  const scheduleLoopRef = useRef(() => {})
+
   const [progress, setProgress] = useState(0)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const [hoveredCardKey, setHoveredCardKey] = useState(null)
@@ -233,6 +238,7 @@ function CompanyDesktop() {
     holdAfterJumpUntilRef.current = performance.now() + duration + 2200
     speedFactorRef.current = 0
     setActiveSlideIndex(slideIdx)
+    scheduleLoopRef.current()
   }
 
   // Switches the front text card immediately, and after a tiny resettable delay
@@ -277,34 +283,31 @@ function CompanyDesktop() {
     let rafId = null
     let lastTime = performance.now()
 
-    const computeScrollTarget = () => {
-      const el = sectionRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const vh = window.innerHeight || document.documentElement.clientHeight
+    const centerInitialSlideIfNeeded = () => {
+      if (hasCenteredInitialSlideRef.current) return
+      const trackEl = trackRef.current
+      const viewportEl = viewportRef.current
+      if (!trackEl || !viewportEl) return
+      const halfHeight =
+        trackEl.children[SLIDES.length]?.offsetTop || trackEl.scrollHeight / 2
+      const firstCard = trackEl.children[0]
+      if (halfHeight <= 0 || !firstCard) return
 
-      // Wait until Company scrolls past the middle of the viewport (52% vh)
-      // so it stays at 0 while the user is viewing Terroir above, and then visibly
-      // animates the white lines, "L'Azienda" title, quote, and slideshow in view.
-      const startY = vh * 0.52
-      const minPossibleTop = Math.max(0, vh - rect.height)
-      const endY = Math.max(vh * 0.06, minPossibleTop + 12)
-
-      const span = Math.max(140, startY - endY)
-      let raw = (startY - rect.top) / span
-
-      // Guarantee 100% completion when scrolled to the very bottom of the document
-      const docHeight = document.documentElement.scrollHeight
-      if (window.scrollY + vh >= docHeight - 6) {
-        raw = 1
-      }
-
-      targetProgressRef.current = clamp01(raw)
+      const viewportCenter = viewportEl.clientHeight / 2
+      const firstCardCenter = firstCard.offsetTop + firstCard.offsetHeight / 2
+      offsetPxRef.current =
+        (((firstCardCenter - viewportCenter) % halfHeight) + halfHeight) %
+        halfHeight
+      hasCenteredInitialSlideRef.current = true
+      trackEl.style.transform = `translate3d(0, ${-offsetPxRef.current}px, 0)`
     }
+
+    let scheduleLoop = () => {}
 
     const animateLoop = (now) => {
       const dt = Math.min(64, Math.max(0, now - lastTime))
       lastTime = now
+      let needsNextFrame = false
 
       // 1. Scroll-driven reveal progress
       const diff = targetProgressRef.current - currentProgressRef.current
@@ -314,6 +317,7 @@ function CompanyDesktop() {
         const step = Math.sign(diff) * Math.min(Math.abs(damped), maxStep)
         currentProgressRef.current += step
         setProgress(currentProgressRef.current)
+        needsNextFrame = true
       } else if (currentProgressRef.current !== targetProgressRef.current) {
         currentProgressRef.current = targetProgressRef.current
         setProgress(currentProgressRef.current)
@@ -330,11 +334,14 @@ function CompanyDesktop() {
         slideshowDelayTimerRef.current = setTimeout(() => {
           isSlideshowReadyRef.current = true
           setIsSlideshowActive(true)
+          if (isInViewRef.current) {
+            scheduleLoop()
+          }
         }, 550)
       }
 
       // 2. Vertical slideshow movement:
-      //    Starts with slide-1 centered in the viewport; only begins sliding after isSlideshowReadyRef is true.
+      //    Starts with slide-1 centered in the viewport; only drifts while in view and ready.
       const trackEl = trackRef.current
       const viewportEl = viewportRef.current
       if (trackEl && viewportEl) {
@@ -365,8 +372,13 @@ function CompanyDesktop() {
 
             if (t >= 1) {
               centeringAnimRef.current = null
+              if (isSlideshowReadyRef.current && isInViewRef.current) {
+                needsNextFrame = true
+              }
+            } else {
+              needsNextFrame = true
             }
-          } else if (isSlideshowReadyRef.current) {
+          } else if (isSlideshowReadyRef.current && isInViewRef.current) {
             const isHoldingOrPendingJump =
               carouselJumpTimerRef.current !== null ||
               now < holdAfterJumpUntilRef.current
@@ -376,11 +388,22 @@ function CompanyDesktop() {
               (targetSpeedFactor - speedFactorRef.current) *
               Math.min(1, dt * 0.012)
 
+            if (
+              targetSpeedFactor === 0 &&
+              Math.abs(speedFactorRef.current) < 0.001
+            ) {
+              speedFactorRef.current = 0
+            }
+
             const basePxPerMs = 0.026
             offsetPxRef.current =
               (offsetPxRef.current +
                 dt * basePxPerMs * speedFactorRef.current) %
               halfHeight
+
+            if (!isTrackPausedRef.current || speedFactorRef.current > 0) {
+              needsNextFrame = true
+            }
           }
 
           trackEl.style.transform = `translate3d(0, ${-offsetPxRef.current}px, 0)`
@@ -400,18 +423,88 @@ function CompanyDesktop() {
         }
       }
 
-      rafId = requestAnimationFrame(animateLoop)
+      if (needsNextFrame) {
+        rafId = requestAnimationFrame(animateLoop)
+      } else {
+        rafId = null
+      }
     }
 
+    scheduleLoop = () => {
+      if (rafId === null) {
+        lastTime = performance.now()
+        rafId = requestAnimationFrame(animateLoop)
+      }
+    }
+
+    scheduleLoopRef.current = scheduleLoop
+
+    const computeScrollTarget = () => {
+      const el = sectionRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || document.documentElement.clientHeight
+
+      // Wait until Company scrolls past the middle of the viewport (52% vh)
+      // so it stays at 0 while the user is viewing Terroir above, and then visibly
+      // animates the white lines, "L'Azienda" title, quote, and slideshow in view.
+      const startY = vh * 0.52
+      const minPossibleTop = Math.max(0, vh - rect.height)
+      const endY = Math.max(vh * 0.06, minPossibleTop + 12)
+
+      const span = Math.max(140, startY - endY)
+      let raw = (startY - rect.top) / span
+
+      // Guarantee 100% completion when scrolled to the very bottom of the document
+      const docHeight = document.documentElement.scrollHeight
+      if (window.scrollY + vh >= docHeight - 6) {
+        raw = 1
+      }
+
+      const nextTarget = clamp01(raw)
+      if (
+        nextTarget !== targetProgressRef.current ||
+        currentProgressRef.current !== nextTarget
+      ) {
+        targetProgressRef.current = nextTarget
+        scheduleLoop()
+      }
+    }
+
+    const sectionEl = sectionRef.current
+    let observer = null
+    if (sectionEl && typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(
+        (entries) => {
+          const inView = Boolean(entries[0]?.isIntersecting)
+          isInViewRef.current = inView
+          setIsInView(inView)
+          if (
+            inView &&
+            (!hasCenteredInitialSlideRef.current ||
+              isSlideshowReadyRef.current ||
+              centeringAnimRef.current !== null ||
+              currentProgressRef.current !== targetProgressRef.current)
+          ) {
+            scheduleLoop()
+          }
+        },
+        { threshold: 0 }
+      )
+      observer.observe(sectionEl)
+    }
+
+    centerInitialSlideIfNeeded()
     computeScrollTarget()
     window.addEventListener('scroll', computeScrollTarget, { passive: true })
     window.addEventListener('resize', computeScrollTarget, { passive: true })
-    rafId = requestAnimationFrame(animateLoop)
 
     return () => {
+      scheduleLoopRef.current = () => {}
+      if (observer) observer.disconnect()
       window.removeEventListener('scroll', computeScrollTarget)
       window.removeEventListener('resize', computeScrollTarget)
-      if (rafId) cancelAnimationFrame(rafId)
+      if (rafId !== null) cancelAnimationFrame(rafId)
     }
   }, [])
 
@@ -790,6 +883,9 @@ function CompanyDesktop() {
                       isTrackPausedRef.current = false
                       setHoveredCardKey(null)
                       setHoveredSlideIndex(null)
+                      if (isSlideshowReadyRef.current && isInViewRef.current) {
+                        scheduleLoopRef.current()
+                      }
                     }}
                     onClick={() => handleSlideClick(slide, idx, slideIdx)}
                     onKeyDown={(e) => {
@@ -816,7 +912,7 @@ function CompanyDesktop() {
                           objectPosition: slide.objectPosition,
                           animation: slide.kbAnimation,
                           animationPlayState:
-                            !isSlideshowActive || isHovered
+                            !isSlideshowActive || !isInView || isHovered
                               ? 'paused'
                               : 'running',
                         }}

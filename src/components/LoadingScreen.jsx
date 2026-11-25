@@ -50,17 +50,31 @@ function easeInOutCubic(t) {
   return c < 0.5 ? 4 * c * c * c : 1 - Math.pow(-2 * c + 2, 3) / 2
 }
 
+const AGE_VERIFIED_KEY = 'laglia_age_verified'
+
+function isAgeAlreadyVerified() {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      window.sessionStorage.getItem(AGE_VERIFIED_KEY) === '1'
+    )
+  } catch {
+    return false
+  }
+}
+
 export default function LoadingScreen({
   durationMs = 2100,
   onStartExit,
   onComplete,
 }) {
   const { t } = useLanguage()
+  const [isAlreadyVerified] = useState(isAgeAlreadyVerified)
   const [progress, setProgress] = useState(0)
   const [isAgePromptVisible, setIsAgePromptVisible] = useState(false)
   const [selectedChoice, setSelectedChoice] = useState(null)
   const [isExiting, setIsExiting] = useState(false)
-  const [isUnmounted, setIsUnmounted] = useState(false)
+  const [isUnmounted, setIsUnmounted] = useState(isAlreadyVerified)
 
   const callbacksRef = useRef({ onStartExit, onComplete })
   const prevOverflowRef = useRef('')
@@ -72,6 +86,16 @@ export default function LoadingScreen({
   }, [onStartExit, onComplete])
 
   useEffect(() => {
+    if (isAlreadyVerified) {
+      if (callbacksRef.current.onStartExit) {
+        callbacksRef.current.onStartExit()
+      }
+      if (callbacksRef.current.onComplete) {
+        callbacksRef.current.onComplete()
+      }
+      return
+    }
+
     prevOverflowRef.current = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
@@ -102,11 +126,16 @@ export default function LoadingScreen({
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
       if (unmountTimerRef.current) clearTimeout(unmountTimerRef.current)
     }
-  }, [durationMs])
+  }, [durationMs, isAlreadyVerified])
 
   const handleConfirmAdult = () => {
     if (!isAgePromptVisible || isExiting) return
     setSelectedChoice('yes')
+    try {
+      window.sessionStorage.setItem(AGE_VERIFIED_KEY, '1')
+    } catch {
+      // Ignore storage errors (e.g. private browsing restrictions)
+    }
 
     exitTimerRef.current = setTimeout(() => {
       setIsExiting(true)

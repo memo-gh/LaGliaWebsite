@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import heroBg from '../../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
+import heroBg from '../../assets/shrinked.webp'
 import trueColoredLaGliaLogo from '../../assets/true_coloredLaGliaLogo.svg'
 import { useLanguage } from '../../i18n/useLanguage'
 import MenuWheel from './MenuWheel'
