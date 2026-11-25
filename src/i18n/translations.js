@@ -10,7 +10,9 @@ export const TRANSLATIONS = {
         'Ci dispiace, devi avere almeno 18 anni per accedere al sito.',
     },
     hero: {
+      line1: 'Tra Scienza',
       conjunction: 'e',
+      line2End: 'Design',
       languageSelectorAria: 'Seleziona lingua',
     },
     menuWheel: {
@@ -51,7 +53,7 @@ export const TRANSLATIONS = {
     },
     company: {
       title: 'L’Azienda',
-      subtitle: 'E i l suo team',
+      subtitle: 'E il suo team',
       prevCardAria: 'Scheda precedente',
       nextCardAria: 'Scheda successiva',
       slideIndicatorAria: 'Indicatore diapositive',
@@ -122,12 +124,16 @@ export const TRANSLATIONS = {
       bottomTextLine1: 'lorem ipsum dolor sit amet,',
       bottomTextLine2: 'sbabolli galoppi cartani',
       bookBtn: 'Prenota',
+      videoFocusHint: 'Clicca per vedere solo il video',
+      videoRestoreHint: 'Clicca per mostrare i contenuti',
     },
     footer: {
       estateHeader: 'TENUTA',
       countryLine: '52014 Poppi AR - Italia',
       contactsHeader: 'CONTATTI',
       linksHeader: 'LINKS',
+      openMaps: 'Apri su Google Maps',
+      closePopupAria: 'Chiudi finestra',
     },
     scrollToTop: {
       label: 'Torna su',
@@ -152,7 +158,9 @@ export const TRANSLATIONS = {
         'Sorry, you must be at least 18 years old to enter this site.',
     },
     hero: {
-      conjunction: '&',
+      line1: 'Science',
+      conjunction: 'meets',
+      line2End: 'Design',
       languageSelectorAria: 'Select language',
     },
     menuWheel: {
@@ -193,7 +201,7 @@ export const TRANSLATIONS = {
     },
     company: {
       title: 'The Estate',
-      subtitle: 'A n d its team',
+      subtitle: 'And its team',
       prevCardAria: 'Previous card',
       nextCardAria: 'Next card',
       slideIndicatorAria: 'Slide indicator',
@@ -264,12 +272,16 @@ export const TRANSLATIONS = {
       bottomTextLine1: 'lorem ipsum dolor sit amet,',
       bottomTextLine2: 'sbabolli galoppi cartani',
       bookBtn: 'Book Now',
+      videoFocusHint: 'Click to view video only',
+      videoRestoreHint: 'Click to show content',
     },
     footer: {
       estateHeader: 'ESTATE',
       countryLine: '52014 Poppi AR - Italy',
       contactsHeader: 'CONTACTS',
       linksHeader: 'LINKS',
+      openMaps: 'Open in Google Maps',
+      closePopupAria: 'Close popup',
     },
     scrollToTop: {
       label: 'Back to top',

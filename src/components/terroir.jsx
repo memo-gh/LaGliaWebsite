@@ -15,6 +15,12 @@ const RIGHT_LINE_STEP_Y_PCT = (534 / CANVAS_H) * 100
 
 const LEFT_CORNER_X_PCT = (21 / CANVAS_W) * 100
 const LEFT_CORNER_Y_PCT = (564 / CANVAS_H) * 100
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
+
+function getIsMobileViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches
+}
 
 function clamp01(val) {
   return Math.max(0, Math.min(1, val))
@@ -289,6 +295,14 @@ export default function Terroir() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isArrowHovered, setIsArrowHovered] = useState(false)
   const [isSwapping, setIsSwapping] = useState(false)
+  const [isMobile, setIsMobile] = useState(getIsMobileViewport)
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MEDIA_QUERY)
+    const handleChange = () => setIsMobile(mq.matches)
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
 
   const handleCardMouseEnter = (slotKey, e) => {
     const el = e.currentTarget
@@ -459,14 +473,23 @@ export default function Terroir() {
   const CARD_GAP = 31
   const RIGHT_EDGE = 979
   const RIGHT_COLLAPSED_W = 177
+  const isMobileExpanded = isMobile && isDetailOpen
+  const isDesktopCollapsed = isDetailOpen && !isMobile
   const leftCardWidth = isDetailOpen
-    ? RIGHT_EDGE - RIGHT_COLLAPSED_W - CARD_GAP - 27 // 744
+    ? isMobile
+      ? RIGHT_EDGE - 27 // 952 (full grid width on mobile while other cards hide)
+      : RIGHT_EDGE - RIGHT_COLLAPSED_W - CARD_GAP - 27 // 744
     : 409 - 27 // 382
-  const rightCardLeft = isDetailOpen ? RIGHT_EDGE - RIGHT_COLLAPSED_W : 440 // 802 vs 440
-  const rightCardWidth = isDetailOpen ? RIGHT_COLLAPSED_W : RIGHT_EDGE - 440 // 177 vs 539
+  const leftCardTop = isMobileExpanded ? 196 : 230
+  const leftCardHeight = isMobileExpanded ? 536 - 196 : 503 - 230
+  const rightCardLeft = isDesktopCollapsed ? RIGHT_EDGE - RIGHT_COLLAPSED_W : 440 // 802 vs 440
+  const rightCardWidth = isDesktopCollapsed ? RIGHT_COLLAPSED_W : RIGHT_EDGE - 440 // 177 vs 539
 
   const cardExpandTransition =
-    'left 620ms cubic-bezier(0.16, 1, 0.3, 1), width 620ms cubic-bezier(0.16, 1, 0.3, 1), border-color 300ms ease, box-shadow 300ms ease'
+    'left 620ms cubic-bezier(0.16, 1, 0.3, 1), top 520ms cubic-bezier(0.16, 1, 0.3, 1), width 620ms cubic-bezier(0.16, 1, 0.3, 1), height 520ms cubic-bezier(0.16, 1, 0.3, 1), border-color 300ms ease, box-shadow 300ms ease'
+  const rightCardTransition = isMobile
+    ? `${cardExpandTransition}, opacity 280ms ease, transform 380ms cubic-bezier(0.16, 1, 0.3, 1)`
+    : cardExpandTransition
 
   return (
     <section
@@ -600,14 +623,14 @@ export default function Terroir() {
               opacity: subtitleP,
               transform: `translate3d(0, ${(1 - subtitleP) * 16}px, 0)`,
             }}
-            className="mt-[clamp(8px,1.35vw,18px)] mb-0 font-serif text-[clamp(11px,1.52vw,20.5px)] font-normal text-[#FFF9EE]/95 leading-[1.4] tracking-[0.01em]"
+            className="mt-[clamp(8px,1.35vw,18px)] mb-0 font-body text-[clamp(11px,1.52vw,20.5px)] font-normal text-[#FFF9EE]/95 leading-[1.4] tracking-[0.01em]"
           >
             <span className="block">{t.terroir.subtitleLine1}</span>
             <span className="block">{t.terroir.subtitleLine2}</span>
           </p>
         </header>
 
-        {/* 4. Left Featured Card (expands right from x:27..409 to x:27..771 when arrow is clicked) */}
+        {/* 4. Left Featured Card (expands right; on mobile fills full width while hiding other cards) */}
         <article
           ref={(el) => {
             cardRefs.current.left = el
@@ -617,14 +640,16 @@ export default function Terroir() {
           onMouseLeave={() => handleCardMouseLeave('left')}
           style={{
             left: `${(27 / CANVAS_W) * 100}%`,
-            top: `${(230 / CANVAS_H) * 100}%`,
+            top: `${(leftCardTop / CANVAS_H) * 100}%`,
             width: `${(leftCardWidth / CANVAS_W) * 100}%`,
-            height: `${((503 - 230) / CANVAS_H) * 100}%`,
+            height: `${(leftCardHeight / CANVAS_H) * 100}%`,
             opacity: leftCardP,
             transform: `translate3d(0, ${(1 - leftCardP) * 24}px, 0)`,
             transition: cardExpandTransition,
           }}
-          className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
+          className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${
+            isDetailOpen ? 'z-20' : 'z-10'
+          } ${cardSurfaceClass}`}
         >
           <CardBorderGlow />
           {/* Subtle #BB4732 right-edge hue when hovering the expand/collapse arrow */}
@@ -644,12 +669,16 @@ export default function Terroir() {
               transform: isSwapping ? 'translateY(6px)' : 'translateY(0)',
               transition: 'opacity 180ms ease, transform 180ms ease',
             }}
-            className="relative z-10 flex h-full w-full items-stretch justify-between gap-[clamp(10px,1.4vw,20px)] overflow-hidden rounded-[inherit] pl-[clamp(18px,3.2vw,44px)] pr-[clamp(10px,1.6vw,22px)] py-[clamp(16px,2.2vw,30px)]"
+            className={`relative z-10 flex h-full w-full items-stretch justify-between gap-[clamp(10px,1.4vw,20px)] overflow-hidden rounded-[inherit] ${
+              isMobileExpanded
+                ? 'pl-4 pr-2.5 py-3.5'
+                : 'pl-[clamp(18px,3.2vw,44px)] pr-[clamp(10px,1.6vw,22px)] py-[clamp(16px,2.2vw,30px)]'
+            }`}
           >
             {/* Left content column: Icon + Title + Body/Detail text */}
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               {/* Icon + Title row */}
-              <div className="flex items-center shrink-0">
+              <div className="flex min-w-0 shrink-0 items-center overflow-hidden">
                 <div className="h-[clamp(28px,4.5vw,58px)] w-[clamp(28px,4.5vw,58px)] shrink-0">
                   <FeaturedIcon className="h-full w-full" />
                 </div>
@@ -658,44 +687,59 @@ export default function Terroir() {
                 </h3>
               </div>
 
-              {/* Body text + Expanded detail column */}
-              <div className="mt-[clamp(12px,1.8vw,24px)] flex flex-1 min-h-0 items-center">
-                {/* Summary lines anchored on the left */}
-                <div className="shrink-0 pl-[clamp(2px,0.4vw,6px)] font-serif text-[clamp(9.5px,1.2vw,16px)] font-normal text-[#FFF9EE]/90 leading-[1.45] tracking-[0.01em]">
-                  {featuredItem.lines.map((line, i) => (
-                    <div key={i} className="whitespace-nowrap">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Expanded detail text revealed smoothly as card widens to the right */}
-                <div
-                  aria-hidden={!isDetailOpen}
-                  style={{
-                    opacity: isDetailOpen ? 1 : 0,
-                    transform: isDetailOpen
-                      ? 'translate3d(0, 0, 0)'
-                      : 'translate3d(-12px, 0, 0)',
-                    maxWidth: isDetailOpen ? '600px' : '0px',
-                    marginLeft: isDetailOpen ? 'clamp(14px, 2.2vw, 32px)' : '0px',
-                    paddingLeft: isDetailOpen ? 'clamp(14px, 2.2vw, 32px)' : '0px',
-                    borderLeftColor: isDetailOpen
-                      ? 'rgba(255, 249, 238, 0.18)'
-                      : 'rgba(255, 249, 238, 0)',
-                    transition: isDetailOpen
-                      ? 'opacity 360ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, transform 420ms cubic-bezier(0.16, 1, 0.3, 1) 180ms, max-width 580ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 480ms cubic-bezier(0.16, 1, 0.3, 1), padding-left 480ms cubic-bezier(0.16, 1, 0.3, 1), border-left-color 360ms ease 180ms'
-                      : 'opacity 150ms ease-out, transform 200ms ease-out, max-width 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 420ms cubic-bezier(0.16, 1, 0.3, 1), padding-left 420ms cubic-bezier(0.16, 1, 0.3, 1), border-left-color 150ms ease',
-                  }}
-                  className={`min-w-0 flex-1 overflow-hidden border-l font-serif text-[clamp(9.5px,1.2vw,16px)] font-normal text-[#FFF9EE]/92 leading-[1.52] tracking-[0.01em] ${
-                    isDetailOpen ? 'pointer-events-auto' : 'pointer-events-none'
-                  }`}
-                >
-                  <p className="m-0 min-w-[clamp(160px,22vw,300px)]">
+              {/* Body text + Expanded detail column (stacked & wrapping cleanly on mobile expanded) */}
+              {isMobileExpanded ? (
+                <div className="mt-3 flex min-h-0 min-w-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1 font-body">
+                  <p className="m-0 text-[12px] font-normal leading-[1.42] tracking-[0.01em] text-[#FFF9EE]/85">
+                    {featuredItem.lines.join(' ')}
+                  </p>
+                  <p className="m-0 border-t border-[#FFF9EE]/18 pt-2.5 text-[12.5px] font-normal leading-[1.48] tracking-[0.01em] text-[#FFF9EE]/95">
                     {featuredItem.detailText}
                   </p>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-[clamp(12px,1.8vw,24px)] flex min-h-0 min-w-0 flex-1 items-center overflow-hidden">
+                  {/* Summary lines anchored on the left */}
+                  <div className="shrink-0 pl-[clamp(2px,0.4vw,6px)] font-body text-[clamp(9.5px,1.2vw,16px)] font-normal text-[#FFF9EE]/90 leading-[1.45] tracking-[0.01em]">
+                    {featuredItem.lines.map((line, i) => (
+                      <div key={i} className="whitespace-nowrap">
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Expanded detail text revealed smoothly as card widens to the right */}
+                  <div
+                    aria-hidden={!isDetailOpen}
+                    style={{
+                      opacity: isDetailOpen ? 1 : 0,
+                      transform: isDetailOpen
+                        ? 'translate3d(0, 0, 0)'
+                        : 'translate3d(-12px, 0, 0)',
+                      maxWidth: isDetailOpen ? '600px' : '0px',
+                      marginLeft: isDetailOpen
+                        ? 'clamp(14px, 2.2vw, 32px)'
+                        : '0px',
+                      paddingLeft: isDetailOpen
+                        ? 'clamp(14px, 2.2vw, 32px)'
+                        : '0px',
+                      borderLeftColor: isDetailOpen
+                        ? 'rgba(255, 249, 238, 0.18)'
+                        : 'rgba(255, 249, 238, 0)',
+                      transition: isDetailOpen
+                        ? 'opacity 360ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, transform 420ms cubic-bezier(0.16, 1, 0.3, 1) 180ms, max-width 580ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 480ms cubic-bezier(0.16, 1, 0.3, 1), padding-left 480ms cubic-bezier(0.16, 1, 0.3, 1), border-left-color 360ms ease 180ms'
+                        : 'opacity 150ms ease-out, transform 200ms ease-out, max-width 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 420ms cubic-bezier(0.16, 1, 0.3, 1), padding-left 420ms cubic-bezier(0.16, 1, 0.3, 1), border-left-color 150ms ease',
+                    }}
+                    className={`min-w-0 flex-1 overflow-hidden border-l font-body text-[clamp(9.5px,1.2vw,16px)] font-normal text-[#FFF9EE]/92 leading-[1.52] tracking-[0.01em] ${
+                      isDetailOpen ? 'pointer-events-auto' : 'pointer-events-none'
+                    }`}
+                  >
+                    <p className="m-0 min-w-[clamp(160px,22vw,300px)]">
+                      {featuredItem.detailText}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Tall stemless #FFF9EE Chevron centered vertically to the full card */}
@@ -736,11 +780,12 @@ export default function Terroir() {
           </div>
         </article>
 
-        {/* 5. Top-Right Horizontal Card (collapses to icon + switch button when featured card expands) */}
+        {/* 5. Top-Right Horizontal Card (collapses on desktop, hides on mobile when featured card expands) */}
         <article
           ref={(el) => {
             cardRefs.current.rightTop = el
           }}
+          aria-hidden={isMobileExpanded}
           onMouseEnter={(e) => handleCardMouseEnter('rightTop', e)}
           onMouseMove={(e) => handleCardMouseMove('rightTop', e)}
           onMouseLeave={() => handleCardMouseLeave('rightTop')}
@@ -749,11 +794,14 @@ export default function Terroir() {
             top: `${(232 / CANVAS_H) * 100}%`,
             width: `${(rightCardWidth / CANVAS_W) * 100}%`,
             height: `${((355 - 232) / CANVAS_H) * 100}%`,
-            opacity: rightTopCardP,
-            transform: `translate3d(${(1 - rightTopCardP) * 24}px, 0, 0)`,
-            transition: cardExpandTransition,
+            opacity: isMobileExpanded ? 0 : rightTopCardP,
+            pointerEvents: isMobileExpanded ? 'none' : 'auto',
+            transform: isMobileExpanded
+              ? 'translate3d(18px, 0, 0) scale(0.96)'
+              : `translate3d(${(1 - rightTopCardP) * 24}px, 0, 0)`,
+            transition: rightCardTransition,
           }}
-          className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
+          className={`absolute z-10 rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
         >
           <CardBorderGlow />
           <div
@@ -768,29 +816,33 @@ export default function Terroir() {
               <RightTopIcon className="h-full w-full" />
             </div>
 
-            {/* Middle Title + Description — collapses cleanly when featured card is expanded */}
+            {/* Middle Title + Description — collapses cleanly on desktop when featured card is expanded */}
             <div
-              aria-hidden={isDetailOpen}
+              aria-hidden={isDesktopCollapsed}
               style={{
-                opacity: isDetailOpen ? 0 : 1,
-                transform: isDetailOpen
+                opacity: isDesktopCollapsed ? 0 : 1,
+                transform: isDesktopCollapsed
                   ? 'translate3d(10px, 0, 0)'
                   : 'translate3d(0, 0, 0)',
-                maxWidth: isDetailOpen ? '0px' : '440px',
-                marginLeft: isDetailOpen ? '0px' : 'clamp(12px, 1.8vw, 26px)',
-                marginRight: isDetailOpen ? '0px' : 'clamp(10px, 1.4vw, 20px)',
-                transition: isDetailOpen
+                maxWidth: isDesktopCollapsed ? '0px' : '440px',
+                marginLeft: isDesktopCollapsed
+                  ? '0px'
+                  : 'clamp(12px, 1.8vw, 26px)',
+                marginRight: isDesktopCollapsed
+                  ? '0px'
+                  : 'clamp(10px, 1.4vw, 20px)',
+                transition: isDesktopCollapsed
                   ? 'opacity 180ms ease-out, transform 220ms ease-out, max-width 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-right 480ms cubic-bezier(0.16, 1, 0.3, 1)'
                   : 'opacity 320ms ease-out 240ms, transform 360ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, max-width 560ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 560ms cubic-bezier(0.16, 1, 0.3, 1), margin-right 560ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               className={`flex min-w-0 flex-1 flex-col overflow-hidden ${
-                isDetailOpen ? 'pointer-events-none' : ''
+                isDesktopCollapsed ? 'pointer-events-none' : ''
               }`}
             >
               <h3 className="m-0 whitespace-nowrap font-serif text-[clamp(16px,2.45vw,32px)] font-normal text-[#FFF9EE] leading-[1.08] tracking-[0.01em]">
                 {rightTopItem.title}
               </h3>
-              <div className="mt-[clamp(2px,0.35vw,5px)] pl-[2%] font-serif text-[clamp(9px,1.18vw,15.5px)] font-normal text-[#FFF9EE]/90 leading-[1.38] tracking-[0.01em]">
+              <div className="mt-[clamp(2px,0.35vw,5px)] pl-[2%] font-body text-[clamp(9px,1.18vw,15.5px)] font-normal text-[#FFF9EE]/90 leading-[1.38] tracking-[0.01em]">
                 {rightTopItem.lines.map((line, i) => (
                   <div key={i} className="whitespace-nowrap">
                     {line}
@@ -802,15 +854,16 @@ export default function Terroir() {
             {/* Right Chevron Action Button */}
             <button
               type="button"
+              tabIndex={isMobileExpanded ? -1 : undefined}
               aria-label={t.terroir.showDetailsAria(rightTopItem.title)}
               onClick={() => handleSwapWithFeatured(1)}
-              className="group relative flex h-[43%] aspect-square shrink-0 items-center justify-center rounded-[clamp(8px,1.1vw,14px)] bg-[#BB4237] hover:bg-[#C94B3F] active:scale-[0.96] cursor-pointer border-none shadow-[0_6px_16px_rgba(187,66,55,0.28)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FFF9EE]/80"
+              className="group relative flex h-[34%] aspect-square shrink-0 items-center justify-center rounded-[clamp(6px,0.9vw,11px)] border-[1.5px] border-[#BB4237] bg-transparent hover:border-[#C94B3F] hover:bg-[#BB4237]/15 active:scale-[0.96] cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FFF9EE]/80"
             >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-[52%] w-[52%] transition-transform duration-200 group-hover:translate-x-[1.5px]"
+                className="h-[50%] w-[50%] transition-transform duration-200 group-hover:translate-x-[1.5px]"
               >
                 <path
                   d="M9 5L16 12L9 19"
@@ -824,11 +877,12 @@ export default function Terroir() {
           </div>
         </article>
 
-        {/* 6. Bottom-Right Horizontal Card (collapses to icon + switch button when featured card expands) */}
+        {/* 6. Bottom-Right Horizontal Card (collapses on desktop, hides on mobile when featured card expands) */}
         <article
           ref={(el) => {
             cardRefs.current.rightBottom = el
           }}
+          aria-hidden={isMobileExpanded}
           onMouseEnter={(e) => handleCardMouseEnter('rightBottom', e)}
           onMouseMove={(e) => handleCardMouseMove('rightBottom', e)}
           onMouseLeave={() => handleCardMouseLeave('rightBottom')}
@@ -837,11 +891,14 @@ export default function Terroir() {
             top: `${(374 / CANVAS_H) * 100}%`,
             width: `${(rightCardWidth / CANVAS_W) * 100}%`,
             height: `${((503 - 374) / CANVAS_H) * 100}%`,
-            opacity: rightBottomCardP,
-            transform: `translate3d(${(1 - rightBottomCardP) * 24}px, 0, 0)`,
-            transition: cardExpandTransition,
+            opacity: isMobileExpanded ? 0 : rightBottomCardP,
+            pointerEvents: isMobileExpanded ? 'none' : 'auto',
+            transform: isMobileExpanded
+              ? 'translate3d(18px, 0, 0) scale(0.96)'
+              : `translate3d(${(1 - rightBottomCardP) * 24}px, 0, 0)`,
+            transition: rightCardTransition,
           }}
-          className={`absolute rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
+          className={`absolute z-10 rounded-[clamp(10px,1.3vw,16px)] ${cardSurfaceClass}`}
         >
           <CardBorderGlow />
           <div
@@ -856,29 +913,33 @@ export default function Terroir() {
               <RightBottomIcon className="h-full w-full" />
             </div>
 
-            {/* Middle Title + Description — collapses cleanly when featured card is expanded */}
+            {/* Middle Title + Description — collapses cleanly on desktop when featured card is expanded */}
             <div
-              aria-hidden={isDetailOpen}
+              aria-hidden={isDesktopCollapsed}
               style={{
-                opacity: isDetailOpen ? 0 : 1,
-                transform: isDetailOpen
+                opacity: isDesktopCollapsed ? 0 : 1,
+                transform: isDesktopCollapsed
                   ? 'translate3d(10px, 0, 0)'
                   : 'translate3d(0, 0, 0)',
-                maxWidth: isDetailOpen ? '0px' : '440px',
-                marginLeft: isDetailOpen ? '0px' : 'clamp(12px, 1.8vw, 26px)',
-                marginRight: isDetailOpen ? '0px' : 'clamp(10px, 1.4vw, 20px)',
-                transition: isDetailOpen
+                maxWidth: isDesktopCollapsed ? '0px' : '440px',
+                marginLeft: isDesktopCollapsed
+                  ? '0px'
+                  : 'clamp(12px, 1.8vw, 26px)',
+                marginRight: isDesktopCollapsed
+                  ? '0px'
+                  : 'clamp(10px, 1.4vw, 20px)',
+                transition: isDesktopCollapsed
                   ? 'opacity 180ms ease-out, transform 220ms ease-out, max-width 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 480ms cubic-bezier(0.16, 1, 0.3, 1), margin-right 480ms cubic-bezier(0.16, 1, 0.3, 1)'
                   : 'opacity 320ms ease-out 240ms, transform 360ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, max-width 560ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 560ms cubic-bezier(0.16, 1, 0.3, 1), margin-right 560ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               className={`flex min-w-0 flex-1 flex-col overflow-hidden ${
-                isDetailOpen ? 'pointer-events-none' : ''
+                isDesktopCollapsed ? 'pointer-events-none' : ''
               }`}
             >
               <h3 className="m-0 whitespace-nowrap font-serif text-[clamp(16px,2.45vw,32px)] font-normal text-[#FFF9EE] leading-[1.08] tracking-[0.01em]">
                 {rightBottomItem.title}
               </h3>
-              <div className="mt-[clamp(2px,0.35vw,5px)] pl-[2%] font-serif text-[clamp(9px,1.18vw,15.5px)] font-normal text-[#FFF9EE]/90 leading-[1.38] tracking-[0.01em]">
+              <div className="mt-[clamp(2px,0.35vw,5px)] pl-[2%] font-body text-[clamp(9px,1.18vw,15.5px)] font-normal text-[#FFF9EE]/90 leading-[1.38] tracking-[0.01em]">
                 {rightBottomItem.lines.map((line, i) => (
                   <div key={i} className="whitespace-nowrap">
                     {line}
@@ -890,15 +951,16 @@ export default function Terroir() {
             {/* Right Chevron Action Button */}
             <button
               type="button"
+              tabIndex={isMobileExpanded ? -1 : undefined}
               aria-label={t.terroir.showDetailsAria(rightBottomItem.title)}
               onClick={() => handleSwapWithFeatured(2)}
-              className="group relative flex h-[43%] aspect-square shrink-0 items-center justify-center rounded-[clamp(8px,1.1vw,14px)] bg-[#BB4237] hover:bg-[#C94B3F] active:scale-[0.96] cursor-pointer border-none shadow-[0_6px_16px_rgba(187,66,55,0.28)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FFF9EE]/80"
+              className="group relative flex h-[34%] aspect-square shrink-0 items-center justify-center rounded-[clamp(6px,0.9vw,11px)] border-[1.5px] border-[#BB4237] bg-transparent hover:border-[#C94B3F] hover:bg-[#BB4237]/15 active:scale-[0.96] cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FFF9EE]/80"
             >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-[52%] w-[52%] transition-transform duration-200 group-hover:translate-x-[1.5px]"
+                className="h-[50%] w-[50%] transition-transform duration-200 group-hover:translate-x-[1.5px]"
               >
                 <path
                   d="M9 5L16 12L9 19"

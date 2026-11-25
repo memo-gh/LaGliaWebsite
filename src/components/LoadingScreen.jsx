@@ -1,37 +1,45 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../i18n/useLanguage'
 
-// Exact geometry measured from the reference logo (280x280 coordinate space):
-// Three eccentric rings of 12px stroke width converging at the bottom.
+// Exact ring centerline geometry extracted from src/assets/true_coloredLaGliaLogo.svg
+// (viewBox 0 0 180 174): three thin eccentric rings with bottom-left inner offset.
+const PATH_LENGTH = 1000
 const RINGS = [
   {
     id: 'outer',
-    cx: 140,
-    cy: 140,
-    r: 134,
-    circumference: 2 * Math.PI * 134,
+    cx: 90,
+    cy: 87,
+    rx: 88.2,
+    ry: 85.26,
+    strokeWidth: 3.54,
     start: 0.0,
     end: 0.88,
   },
   {
     id: 'middle',
-    cx: 140,
-    cy: 156.5,
-    r: 106,
-    circumference: 2 * Math.PI * 106,
+    cx: 89.5,
+    cy: 92.5,
+    rx: 67.7625,
+    ry: 67.7625,
+    strokeWidth: 3.475,
     start: 0.1,
     end: 0.94,
   },
   {
     id: 'inner',
-    cx: 140,
-    cy: 178,
-    r: 73,
-    circumference: 2 * Math.PI * 73,
+    cx: 81,
+    cy: 107.5,
+    rx: 47.285,
+    ry: 47.7675,
+    strokeWidth: 3.45,
     start: 0.2,
     end: 1.0,
   },
 ]
+
+function getRingPath({ cx, cy, rx, ry }) {
+  return `M ${cx} ${cy + ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy - ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy + ry}`
+}
 
 function clamp01(val) {
   return Math.max(0, Math.min(1, val))
@@ -136,23 +144,21 @@ export default function LoadingScreen({
       }}
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#FFE6B6] pb-[clamp(84px,14dvh,144px)] select-none"
     >
-      {/* 3-Ring Eccentric Logo SVG */}
-      <div className="w-[clamp(170px,min(24vw,34dvh),270px)] aspect-square">
+      {/* 3-Ring Eccentric Logo SVG matching true_coloredLaGliaLogo.svg */}
+      <div className="w-[clamp(170px,min(24vw,34dvh),270px)] aspect-[180/174]">
         <svg
-          viewBox="0 0 280 280"
+          viewBox="0 0 180 174"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="h-full w-full overflow-visible"
         >
-          {/* Base warm taupe-grey rings (#8C8377) matching reference image */}
+          {/* Base warm taupe-grey rings (#8C8377) */}
           {RINGS.map((ring) => (
-            <circle
+            <path
               key={`base-${ring.id}`}
-              cx={ring.cx}
-              cy={ring.cy}
-              r={ring.r}
+              d={getRingPath(ring)}
               stroke="#8C8377"
-              strokeWidth="12"
+              strokeWidth={ring.strokeWidth}
             />
           ))}
 
@@ -161,21 +167,19 @@ export default function LoadingScreen({
             const localT =
               (progress - ring.start) / Math.max(0.001, ring.end - ring.start)
             const ringP = easeInOutCubic(localT)
-            const dashOffset = ring.circumference * (1 - ringP)
+            const dashOffset = PATH_LENGTH * (1 - ringP)
 
             return (
-              <circle
+              <path
                 key={`fill-${ring.id}`}
-                cx={ring.cx}
-                cy={ring.cy}
-                r={ring.r}
+                d={getRingPath(ring)}
+                pathLength={PATH_LENGTH}
                 stroke="#BB4732"
-                strokeWidth="12"
+                strokeWidth={ring.strokeWidth}
                 strokeLinecap="round"
-                strokeDasharray={ring.circumference}
+                strokeDasharray={PATH_LENGTH}
                 strokeDashoffset={dashOffset}
                 opacity={ringP > 0.002 ? 1 : 0}
-                transform={`rotate(90 ${ring.cx} ${ring.cy})`}
               />
             )
           })}

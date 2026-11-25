@@ -632,7 +632,7 @@ export default function CompanyMobile({ slides, topLeftLineXPct }) {
                 <span className="font-serif text-[26px] font-bold leading-none">
                   &ldquo;
                 </span>
-                <p className="pt-1 font-serif text-[clamp(13px,3.6vw,16.5px)] leading-[1.45] tracking-[0.015em]">
+                <p className="pt-1 font-body text-[clamp(13px,3.6vw,16.5px)] leading-[1.45] tracking-[0.01em]">
                   {slide.quoteLines.join(' ')}
                 </p>
                 <div className="mt-3 flex items-center justify-between">
@@ -715,13 +715,13 @@ export default function CompanyMobile({ slides, topLeftLineXPct }) {
                   &ldquo;
                 </span>
 
-                {/* Flowing horizontal serif quote body */}
+                {/* Flowing horizontal Plus Jakarta Sans quote body */}
                 <p
                   style={{
                     filter: isFront ? 'blur(0px)' : 'blur(1px)',
                     transition: 'filter 320ms ease',
                   }}
-                  className="my-auto pt-1 font-serif text-[clamp(13px,3.6vw,16.5px)] font-normal leading-[1.45] tracking-[0.015em] text-white/95"
+                  className="my-auto pt-1 font-body text-[clamp(13px,3.6vw,16.5px)] font-normal leading-[1.45] tracking-[0.01em] text-white/95"
                 >
                   {slide.quoteLines.join(' ')}
                 </p>

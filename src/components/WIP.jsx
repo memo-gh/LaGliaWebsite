@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import coloredLaGliaLogo from '../assets/coloredLaGliaLogo.svg'
+import trueColoredLaGliaLogo from '../assets/true_coloredLaGliaLogo.svg'
 import { useLanguage } from '../i18n/useLanguage'
 
 export default function WIP({ isOpen, onClose }) {
@@ -165,7 +165,7 @@ export default function WIP({ isOpen, onClose }) {
         {/* Top Colored La Glia Logo */}
         <img
           data-wip-item
-          src={coloredLaGliaLogo}
+          src={trueColoredLaGliaLogo}
           alt="La Glia logo"
           className="h-[clamp(64px,7vw,92px)] w-[clamp(64px,7vw,92px)] object-contain shrink-0"
         />
@@ -201,7 +201,7 @@ export default function WIP({ isOpen, onClose }) {
               href="tel:+393770888927"
               className="text-inherit no-underline hover:underline underline-offset-4"
             >
-              3770888927
+              +39 377 088 8927
             </a>
             .
           </span>

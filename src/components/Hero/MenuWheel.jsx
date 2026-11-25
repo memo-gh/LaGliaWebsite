@@ -21,12 +21,23 @@ const DESKTOP_SLOT_ANGLES = [64, 32, 0, -32, -64]
 const MOBILE_SLOT_ANGLES = [-66, -36, 0, 36, 66]
 
 // Shift the desktop/tablet wheel center left from the right edge so the nested
-// bottom convergence of the La Glia logo (coloredLaGliaLogo.svg) is clearly visible
+// eccentric rings of the La Glia logo (true_coloredLaGliaLogo.svg) are clearly visible
 // along with its orbiting navigation labels.
 const DESKTOP_CENTER_OFFSET_X = 85
 const DESKTOP_ORBIT_RADIUS = 290
 const MOBILE_ORBIT_RX = 260
 const MOBILE_ORBIT_RY = 296
+
+// Exact ring centerline geometry extracted from src/assets/true_coloredLaGliaLogo.svg
+// (viewBox 0 0 180 174, outer center at (90, 87)):
+const LOGO_COLOR = '#BB4732'
+const LOGO_RINGS = [
+  { cx: 0, cy: 0, rx: 88.2, ry: 85.26, strokeWidth: 3.54, delayMs: 0 },
+  { cx: -0.5, cy: 5.5, rx: 67.7625, ry: 67.7625, strokeWidth: 3.475, delayMs: 120 },
+  { cx: -9, cy: 20.5, rx: 47.285, ry: 47.7675, strokeWidth: 3.45, delayMs: 240 },
+]
+const DESKTOP_LOGO_SCALE = 196.5 / 90
+const MOBILE_LOGO_SCALE = 158.5 / 90
 
 const WHEEL_UNITS = {
   mobile: 'clamp(0.44px, min(0.148vw, 0.108dvh), 0.96px)',
@@ -202,21 +213,27 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
     rafRef.current = requestAnimationFrame(tick)
   }
 
-  // Desktop circle centerline geometry matching coloredLaGliaLogo.svg (16px stroke):
-  // Three eccentric rings stacked flush at the bottom, shifted left so the full
-  // bottom convergence is visible while the right edge clips cleanly off-canvas.
-  const desktopRings = [
-    { r: 188.5, cy: 0, delayMs: 0 },
-    { r: 149, cy: 24, delayMs: 120 },
-    { r: 102.5, cy: 55, delayMs: 240 },
-  ]
+  // Desktop ring geometry scaled directly from true_coloredLaGliaLogo.svg:
+  // Three thin eccentric rings shifted left so the nested bottom-left geometry
+  // is clearly visible while the right edge clips cleanly off-canvas.
+  const desktopRings = LOGO_RINGS.map((ring) => ({
+    cx: Number((ring.cx * DESKTOP_LOGO_SCALE).toFixed(2)),
+    cy: Number((ring.cy * DESKTOP_LOGO_SCALE).toFixed(2)),
+    rx: Number((ring.rx * DESKTOP_LOGO_SCALE).toFixed(2)),
+    ry: Number((ring.ry * DESKTOP_LOGO_SCALE).toFixed(2)),
+    strokeWidth: Number((ring.strokeWidth * DESKTOP_LOGO_SCALE).toFixed(2)),
+    delayMs: ring.delayMs,
+  }))
 
-  // Mobile eccentric bottom-anchored arcs matching coloredLaGliaLogo.svg proportions
-  const mobileArcs = [
-    { r: 152, cy: 0, delayMs: 0 },
-    { r: 120, cy: 19.5, delayMs: 120 },
-    { r: 82.5, cy: 44.5, delayMs: 240 },
-  ]
+  // Mobile eccentric bottom-anchored arcs scaled directly from true_coloredLaGliaLogo.svg
+  const mobileArcs = LOGO_RINGS.map((ring) => ({
+    cx: Number((ring.cx * MOBILE_LOGO_SCALE).toFixed(2)),
+    cy: Number((ring.cy * MOBILE_LOGO_SCALE).toFixed(2)),
+    rx: Number((ring.rx * MOBILE_LOGO_SCALE).toFixed(2)),
+    ry: Number((ring.ry * MOBILE_LOGO_SCALE).toFixed(2)),
+    strokeWidth: Number((ring.strokeWidth * MOBILE_LOGO_SCALE).toFixed(2)),
+    delayMs: ring.delayMs,
+  }))
 
   return (
     <div
@@ -252,10 +269,10 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             {mobileArcs.map((arc, i) => (
               <path
                 key={i}
-                d={`M ${-arc.r} ${arc.cy} A ${arc.r} ${arc.r} 0 0 1 ${arc.r} ${arc.cy}`}
+                d={`M ${arc.cx - arc.rx} ${arc.cy} A ${arc.rx} ${arc.ry} 0 0 1 ${arc.cx + arc.rx} ${arc.cy}`}
                 pathLength="1"
-                stroke="#BD3B28"
-                strokeWidth="13"
+                stroke={LOGO_COLOR}
+                strokeWidth={arc.strokeWidth}
                 strokeLinecap="butt"
                 style={{
                   strokeDasharray: 1,
@@ -282,10 +299,10 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             {desktopRings.map((ring, i) => (
               <path
                 key={i}
-                d={`M ${ring.r} ${ring.cy} A ${ring.r} ${ring.r} 0 1 0 ${-ring.r} ${ring.cy} A ${ring.r} ${ring.r} 0 1 0 ${ring.r} ${ring.cy}`}
+                d={`M ${ring.cx + ring.rx} ${ring.cy} A ${ring.rx} ${ring.ry} 0 1 0 ${ring.cx - ring.rx} ${ring.cy} A ${ring.rx} ${ring.ry} 0 1 0 ${ring.cx + ring.rx} ${ring.cy}`}
                 pathLength="1"
-                stroke="#BD3B28"
-                strokeWidth="16"
+                stroke={LOGO_COLOR}
+                strokeWidth={ring.strokeWidth}
                 strokeLinecap="butt"
                 style={{
                   strokeDasharray: 1,
@@ -349,7 +366,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
                     transition:
                       'color 250ms ease, transform 250ms ease, text-shadow 250ms ease',
                   }}
-                  className={`block cursor-pointer whitespace-nowrap px-1.5 py-1 font-sans font-bold leading-tight tracking-tight md:p-0 ${
+                  className={`block cursor-pointer whitespace-nowrap px-1.5 py-1 font-serif font-bold leading-tight tracking-tight md:p-0 ${
                     isHighlighted
                       ? 'text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)] md:[text-shadow:0_2px_16px_rgba(0,0,0,0.35)]'
                       : 'text-white/75 [text-shadow:0_2px_10px_rgba(0,0,0,0.45)] md:text-[#6A717A]/85 md:[text-shadow:none]'

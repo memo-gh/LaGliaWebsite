@@ -963,36 +963,38 @@ function WineDesktop({ onOpenWip }) {
         }}
         className="relative h-full shrink-0"
       >
-        {/* Top Row: Flex container so Title, Year, Hairline, and "In Dettaglio >" never overlap */}
+        {/* Top Row: Flex container so Title, Year, Hairline, and "In Dettaglio >" stay cleanly in-line */}
         <div
           style={{
             left: `${(20 / RED_CARD_W) * 100}%`,
             right: `${((RED_CARD_W - 650) / RED_CARD_W) * 100}%`,
             top: `${(22 / RED_CARD_H) * 100}%`,
           }}
-          className="absolute z-25 flex items-baseline gap-[clamp(10px,1.2cqw,18px)]"
+          className="absolute z-25 flex items-center gap-[clamp(10px,1.2cqw,18px)]"
         >
-          <h3
-            style={{
-              opacity: wineNameP,
-              transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
-            }}
-            className="shrink-0 font-serif text-[clamp(24px,3.05cqw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
-          >
-            {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
-          </h3>
-
-          {!isComingSoon && (
-            <span
+          <div className="flex shrink-0 items-baseline gap-[clamp(10px,1.2cqw,18px)]">
+            <h3
               style={{
-                opacity: wineYearP,
-                transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
+                opacity: wineNameP,
+                transform: `translate3d(${(1 - wineNameP) * -14}px, ${(1 - wineNameP) * 14}px, 0)`,
               }}
-              className="shrink-0 font-serif text-[clamp(18px,2.2cqw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
+              className="shrink-0 font-serif text-[clamp(24px,3.05cqw,44px)] font-bold text-[#FFF9EE] leading-none tracking-[0.01em] whitespace-nowrap"
             >
-              2023
-            </span>
-          )}
+              {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
+            </h3>
+
+            {!isComingSoon && (
+              <span
+                style={{
+                  opacity: wineYearP,
+                  transform: `translate3d(${(1 - wineYearP) * -10}px, ${(1 - wineYearP) * 12}px, 0)`,
+                }}
+                className="shrink-0 font-serif text-[clamp(18px,2.2cqw,32px)] font-bold text-[#FFF9EE] leading-none tracking-[0.015em]"
+              >
+                2023
+              </span>
+            )}
+          </div>
 
           {/* Horizontal line auto-filling remaining width cleanly */}
           <div
@@ -1002,7 +1004,7 @@ function WineDesktop({ onOpenWip }) {
               transform: `scaleX(${innerTopLineP})`,
               opacity: innerTopLineP > 0.005 ? 1 : 0,
             }}
-            className="pointer-events-none h-px flex-1 self-center bg-[#FFF9EE]/60"
+            className="pointer-events-none h-px flex-1 bg-[#FFF9EE]/60"
           />
 
           {/* "In Dettaglio >" trigger on Red card, or "In Cantina" label on Coming Soon card */}
@@ -1061,14 +1063,14 @@ function WineDesktop({ onOpenWip }) {
           className="pointer-events-none absolute w-px bg-[#FFF9EE]/55"
         />
 
-        {/* Left Column: 8-line Serif Description Paragraph */}
+        {/* Left Column: 8-line Description Paragraph */}
         <div
           style={{
             left: `${(56 / RED_CARD_W) * 100}%`,
             top: `${(96 / RED_CARD_H) * 100}%`,
             width: `${((398 - 56) / RED_CARD_W) * 100}%`,
           }}
-          className="absolute font-serif text-[clamp(11px,1.22cqw,18px)] font-normal text-[#FFF9EE] leading-[1.32] tracking-[0.01em]"
+          className="absolute font-body text-[clamp(11px,1.22cqw,18px)] font-normal text-[#FFF9EE] leading-[1.35] tracking-[0.005em]"
         >
           {linesToRender.map((line, idx) => {
             const lineStart = 0.44 + idx * 0.032
@@ -1266,7 +1268,7 @@ function WineDesktop({ onOpenWip }) {
               >
                 {t.wine.vinificationLabel}
               </span>
-              <div className="font-serif text-[clamp(10px,1.12cqw,16px)] font-bold text-[#FFF9EE] leading-[1.32] tracking-[0.01em]">
+              <div className="font-body text-[clamp(10px,1.12cqw,16px)] font-medium text-[#FFF9EE] leading-[1.36] tracking-[0.005em]">
                 {VINIFICAZIONE_LINES.map((line, idx) => (
                   <div key={idx} data-detail-item>
                     {line}

@@ -550,7 +550,7 @@ function CompanyDesktop() {
           {t.company.title}
         </h2>
 
-        {/* 5. Header Subtitle: "E i l suo team" aligned to the right end of the horizontal line */}
+        {/* 5. Header Subtitle: "E il suo team" aligned to the right end of the horizontal line */}
         <div
           style={{
             left: `${(40 / CANVAS_W) * 100}%`,
@@ -630,14 +630,14 @@ function CompanyDesktop() {
                   &ldquo;
                 </span>
 
-                {/* 12-line Serif Body Text sized to fill the card cleanly */}
+                {/* 12-line Plus Jakarta Sans Body Text sized to fill the card cleanly */}
                 <div
                   style={{
                     opacity: isFront ? 1 : 0.18,
                     filter: isFront ? 'blur(0px)' : 'blur(1.5px)',
                     transition: 'opacity 340ms ease, filter 340ms ease',
                   }}
-                  className="my-auto pl-[clamp(8px,1vw,14px)] font-serif text-[clamp(11px,1.5vw,20.5px)] font-normal text-white/95 leading-[1.33] tracking-[0.025em]"
+                  className="my-auto pl-[clamp(8px,1vw,14px)] font-body text-[clamp(11px,1.5vw,20.5px)] font-normal text-white/95 leading-[1.33] tracking-[0.01em]"
                 >
                   {slide.quoteLines.map((line, index) => {
                     const lineStart = 0.36 + index * 0.028

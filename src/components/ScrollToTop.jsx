@@ -57,7 +57,7 @@ export default function ScrollToTop() {
         transition:
           'opacity 360ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms ease, box-shadow 220ms ease',
       }}
-      className={`fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-[#BD3B28] text-white shadow-md shadow-black/30 hover:bg-[#a63322] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 cursor-pointer ${
+      className={`fixed bottom-4 right-3 z-50 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-[#BD3B28] text-white shadow-md shadow-black/30 hover:bg-[#a63322] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 cursor-pointer md:bottom-6 md:right-6 md:h-10 md:w-10 ${
         isVisible ? 'pointer-events-auto' : 'pointer-events-none'
       }`}
     >
@@ -65,7 +65,7 @@ export default function ScrollToTop() {
         viewBox="0 0 20 20"
         fill="none"
         aria-hidden="true"
-        className="h-4 w-4"
+        className="h-3.5 w-3.5 md:h-4 md:w-4"
       >
         <path
           d="M10 15.5V4.5M10 4.5L5.25 9.25M10 4.5L14.75 9.25"

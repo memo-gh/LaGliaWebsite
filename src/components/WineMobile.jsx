@@ -225,7 +225,7 @@ export default function WineMobile({
             }`}
           >
             {/* Top Row: Title (+ Year) | Flexible hairline | "In Dettaglio >" / "In Cantina" */}
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <div className="flex items-baseline gap-2.5">
                 <h3 className="font-serif text-[clamp(22px,6.2vw,34px)] font-bold leading-none tracking-[0.01em] text-[#FFF9EE]">
                   {isComingSoon ? t.wine.comingSoonTitle : t.wine.merlotTitle}
@@ -239,7 +239,7 @@ export default function WineMobile({
 
               <div
                 aria-hidden="true"
-                className="hidden h-px flex-1 self-center bg-[#FFF9EE]/55 sm:block"
+                className="hidden h-px flex-1 bg-[#FFF9EE]/55 sm:block"
               />
 
               {isComingSoon ? (
@@ -262,7 +262,7 @@ export default function WineMobile({
             <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-5 sm:grid-cols-[1.35fr_auto_auto] sm:gap-x-6">
               {/* Description Paragraph (below specs on narrow phones, left column on sm+) */}
               <div className="col-span-2 order-2 border-l border-[#FFF9EE]/55 pl-3.5 sm:col-span-1 sm:order-1">
-                <p className="font-serif text-[clamp(13px,3.5vw,15.5px)] font-normal leading-[1.45] tracking-[0.01em] text-[#FFF9EE]">
+                <p className="font-body text-[clamp(13px,3.5vw,15.5px)] font-normal leading-[1.48] tracking-[0.005em] text-[#FFF9EE]">
                   {linesToRender.join(' ')}
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default function WineMobile({
                     <span className="font-serif text-[clamp(10px,2.7vw,12px)] font-bold uppercase leading-none tracking-[0.02em] text-[#BD9EAF]">
                       {t.wine.vinificationLabel}
                     </span>
-                    <p className="font-serif text-[clamp(12px,3.3vw,14.5px)] font-bold leading-[1.38] tracking-[0.01em] text-[#FFF9EE]">
+                    <p className="font-body text-[clamp(12px,3.3vw,14.5px)] font-medium leading-[1.42] tracking-[0.005em] text-[#FFF9EE]">
                       {vinificazioneLines.join(' ')}
                     </p>
                   </div>

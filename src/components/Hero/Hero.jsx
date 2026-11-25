@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import heroBg from '../../assets/dan-meyers-0AgtPoAARtE-unsplash.jpg'
-import coloredLaGliaLogo from '../../assets/coloredLaGliaLogo.svg'
+import trueColoredLaGliaLogo from '../../assets/true_coloredLaGliaLogo.svg'
 import { useLanguage } from '../../i18n/useLanguage'
 import MenuWheel from './MenuWheel'
 
@@ -59,7 +59,7 @@ export default function Hero({
         {/* Header: La Glia Logo (drawn top-to-bottom) + "LA GLIA | Azienda Agricola" (appears at 1170ms) */}
         <header className="flex items-center justify-center gap-[clamp(0.5rem,2.2vw,1rem)] md:-ml-[clamp(0.35rem,0.9vw,1rem)] md:items-end md:justify-start md:gap-[clamp(0.6rem,1.1vw,1.25rem)] lg:-ml-[clamp(0.35rem,1.1vw,1.35rem)] lg:gap-[clamp(0.65rem,1.2vw,1.5rem)]">
           <img
-            src={coloredLaGliaLogo}
+            src={trueColoredLaGliaLogo}
             alt="La Glia logo"
             style={{
               clipPath: isLoaded ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
@@ -82,10 +82,16 @@ export default function Hero({
           </span>
         </header>
 
-        {/* Main Typography: "Tra Scienza" and "e Design" scaling dynamically across breakpoints */}
+        {/* Main Typography: "Tra Scienza / e Design" (IT) or "Science / meets Design" (EN) */}
         <div className="mt-[clamp(0.65rem,2dvh,1.25rem)] md:mt-[clamp(0.75rem,1.6vw,1.75rem)]">
-          <h1 className="font-sans text-[clamp(2.45rem,min(12.2vw,7.4dvh),4.25rem)] font-bold leading-[1.04] tracking-[-0.025em] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.28)] sm:text-[clamp(3.25rem,min(10.5vw,8dvh),5rem)] md:text-[clamp(3rem,7.8vw,5.25rem)] md:[text-shadow:none] lg:text-[clamp(3.5rem,8.4vw,7.5rem)] xl:text-[clamp(3.2rem,9.4vw,13rem)]">
-            {/* Line 1: "Tra Scienza" */}
+          <h1
+            className={`font-serif font-bold leading-[1.04] tracking-[-0.02em] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.28)] md:[text-shadow:none] ${
+              language === 'en'
+                ? 'text-[clamp(2.2rem,min(10.8vw,6.8dvh),3.85rem)] sm:text-[clamp(2.85rem,min(9.4vw,7.4dvh),4.5rem)] md:text-[clamp(2.65rem,6.9vw,4.75rem)] lg:text-[clamp(3.15rem,7.2vw,6.5rem)] xl:text-[clamp(3rem,7.8vw,10.5rem)]'
+                : 'text-[clamp(2.45rem,min(12.2vw,7.4dvh),4.25rem)] sm:text-[clamp(3.25rem,min(10.5vw,8dvh),5rem)] md:text-[clamp(3rem,7.8vw,5.25rem)] lg:text-[clamp(3.5rem,8.4vw,7.5rem)] xl:text-[clamp(3.2rem,9.4vw,13rem)]'
+            }`}
+          >
+            {/* Line 1: "Tra Scienza" / "Science" */}
             <span
               style={{
                 opacity: isLoaded ? 1 : 0,
@@ -97,10 +103,10 @@ export default function Hero({
               }}
               className="block"
             >
-              Tra Scienza
+              {t.hero.line1}
             </span>
 
-            {/* Line 2: "e" / "&" (italic serif in #BD3B28 with its own delay) + "Design" on the same line */}
+            {/* Line 2: "e" / "meets" (italic Poppins in #BD3B28 with its own delay) + "Design" on the same line */}
             <span className="flex items-baseline justify-center gap-[clamp(0.45rem,2vw,1rem)] whitespace-nowrap md:justify-start md:gap-[clamp(0.6rem,1.4vw,1.6rem)]">
               <span
                 style={{
@@ -111,9 +117,9 @@ export default function Hero({
                   transition:
                     'opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) 750ms',
                 }}
-                className="inline-block font-serif italic font-normal text-[#BD3B28] pr-[0.06em]"
+                className="inline-block font-sans italic font-normal text-[#BD3B28] pr-[0.06em]"
               >
-                {language === 'en' ? '&' : t.hero.conjunction}
+                {t.hero.conjunction}
               </span>
               <span
                 style={{
@@ -126,7 +132,7 @@ export default function Hero({
                 }}
                 className="inline-block"
               >
-                Design
+                {t.hero.line2End}
               </span>
             </span>
           </h1>
@@ -166,7 +172,7 @@ export default function Hero({
             onClick={() => handleLanguageSelect('it')}
             aria-pressed={language === 'it'}
             aria-label="Italiano"
-            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-sans text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
               language === 'it'
                 ? 'text-[#FFF9EE]'
                 : 'text-white/60 hover:text-white/90'
@@ -180,7 +186,7 @@ export default function Hero({
             onClick={() => handleLanguageSelect('en')}
             aria-pressed={language === 'en'}
             aria-label="English"
-            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-sans text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
               language === 'en'
                 ? 'text-[#FFF9EE]'
                 : 'text-white/60 hover:text-white/90'
