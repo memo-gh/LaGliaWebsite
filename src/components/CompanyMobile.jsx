@@ -392,7 +392,8 @@ export default function CompanyMobile({ slides, topLeftLineXPct }) {
   }, [slideCount])
 
   // Staged scroll reveal curves
-  const lineP = stage(progress, 0.0, 0.35)
+  const vertLineP = stage(progress, 0.0, 0.22)
+  const horizLineP = stage(progress, 0.14, 0.4)
   const titleP = stage(progress, 0.08, 0.45)
   const subtitleP = stage(progress, 0.22, 0.58)
   const slideshowP = stage(progress, 0.28, 0.72)
@@ -404,7 +405,7 @@ export default function CompanyMobile({ slides, topLeftLineXPct }) {
     <section
       ref={sectionRef}
       id="azienda"
-      className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#464534_0%,#3D3930_50%,#332D2B_100%)] pb-12 pt-9 text-white select-none sm:pb-16 sm:pt-12"
+      className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#464534_0%,#3D3930_50%,#332D2B_100%)] pb-12 text-white select-none sm:pb-16"
     >
       <style>{`
         @keyframes kbDrift1 {
@@ -425,54 +426,66 @@ export default function CompanyMobile({ slides, topLeftLineXPct }) {
         }
       `}</style>
 
-      {/* Top-left vertical architectural white line connecting seamlessly from Terroir */}
-      <div
-        aria-hidden="true"
-        style={{
-          left: `${topLeftLineXPct}%`,
-          top: 0,
-          height: '4.6rem',
-          transformOrigin: 'center top',
-          transform: `scaleY(${lineP})`,
-          opacity: lineP > 0.005 ? 1 : 0,
-        }}
-        className="pointer-events-none absolute z-10 w-px bg-white/65"
-      />
-
-      {/* Header: "L'Azienda" + architectural horizontal white line + "E i l suo team" */}
-      <header className="relative mx-auto w-full px-6 pb-5 sm:px-10 sm:pb-6">
-        <div className="mx-auto max-w-[520px]">
-          <h2
-            style={{
-              opacity: titleP,
-              transform: `translate3d(${(1 - titleP) * -14}px, ${(1 - titleP) * 16}px, 0)`,
-              clipPath: `inset(-15% ${(1 - titleP) * 100}% -15% 0)`,
-            }}
-            className="font-serif text-[clamp(26px,8vw,40px)] font-bold leading-none tracking-[0.005em] text-white"
-          >
-            {t.company.title}
-          </h2>
-
+      {/* Header: Top-left vertical line connects seamlessly from Terroir into the horizontal line beneath "L'Azienda" */}
+      <header className="relative w-full pb-5 sm:pb-6">
+        <div className="relative pt-9 sm:pt-12">
+          {/* Top-left vertical architectural white line */}
           <div
             aria-hidden="true"
             style={{
-              transformOrigin: 'left center',
-              transform: `scaleX(${lineP})`,
-              opacity: lineP > 0.005 ? 1 : 0,
+              left: `${topLeftLineXPct}%`,
+              top: 0,
+              bottom: 0,
+              transformOrigin: 'center top',
+              transform: `scaleY(${vertLineP})`,
+              opacity: vertLineP > 0.005 ? 1 : 0,
             }}
-            className="mt-2.5 h-px w-full bg-white/65"
+            className="pointer-events-none absolute z-10 w-px bg-white/65"
           />
 
+          <div className="mx-auto w-full px-6 sm:px-10">
+            <div className="mx-auto max-w-[520px] pb-2.5">
+              <h2
+                style={{
+                  opacity: titleP,
+                  transform: `translate3d(${(1 - titleP) * -14}px, ${(1 - titleP) * 16}px, 0)`,
+                  clipPath: `inset(-15% ${(1 - titleP) * 100}% -15% 0)`,
+                }}
+                className="font-serif text-[clamp(26px,8vw,40px)] font-bold leading-none tracking-[0.005em] text-white"
+              >
+                {t.company.title}
+              </h2>
+            </div>
+          </div>
+
+          {/* Horizontal white line starting at the exact corner of the vertical line */}
           <div
+            aria-hidden="true"
             style={{
-              opacity: subtitleP,
-              transform: `translate3d(${(1 - subtitleP) * -10}px, ${(1 - subtitleP) * 8}px, 0)`,
+              left: `${topLeftLineXPct}%`,
+              right: 'max(1.5rem, calc((100% - 520px) / 2))',
+              bottom: 0,
+              transformOrigin: 'left center',
+              transform: `scaleX(${horizLineP})`,
+              opacity: horizLineP > 0.005 ? 1 : 0,
             }}
-            className="mt-1.5 flex justify-end"
-          >
-            <span className="font-serif text-[clamp(11px,3.2vw,14px)] font-normal leading-none tracking-[0.05em] text-[#BB4732]">
-              {t.company.subtitle}
-            </span>
+            className="pointer-events-none absolute z-10 h-px bg-white/65"
+          />
+        </div>
+
+        <div className="mx-auto w-full px-6 sm:px-10">
+          <div className="mx-auto max-w-[520px]">
+            <div
+              style={{
+                opacity: subtitleP,
+                transform: `translate3d(${(1 - subtitleP) * -10}px, ${(1 - subtitleP) * 8}px, 0)`,
+              }}
+              className="mt-1.5 flex justify-end"
+            >
+              <span className="font-serif text-[clamp(11px,3.2vw,14px)] font-normal leading-none tracking-[0.05em] text-[#BB4732]">
+                {t.company.subtitle}
+              </span>
+            </div>
           </div>
         </div>
       </header>

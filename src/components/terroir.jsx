@@ -623,7 +623,7 @@ export default function Terroir() {
               opacity: subtitleP,
               transform: `translate3d(0, ${(1 - subtitleP) * 16}px, 0)`,
             }}
-            className="mt-[clamp(8px,1.35vw,18px)] mb-0 font-body text-[clamp(11px,1.52vw,20.5px)] font-normal text-[#FFF9EE]/95 leading-[1.4] tracking-[0.01em]"
+            className="mt-[clamp(8px,1.35vw,18px)] mb-0 font-body text-[clamp(6.8px,1.88vw,10.5px)] sm:text-[clamp(10px,1.52vw,20.5px)] font-normal text-[#FFF9EE]/95 leading-[1.4] tracking-[0.01em]"
           >
             <span className="block">{t.terroir.subtitleLine1}</span>
             <span className="block">{t.terroir.subtitleLine2}</span>
