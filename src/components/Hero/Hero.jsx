@@ -8,6 +8,7 @@ export default function Hero({
   isReady = true,
   language: controlledLanguage,
   onLanguageChange,
+  isWheelLogoDocked = false,
 }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const { language: contextLanguage, setLanguage, t } = useLanguage()
@@ -78,7 +79,9 @@ export default function Hero({
             }}
             className="font-serif text-[clamp(0.95rem,4vw,1.6rem)] font-normal leading-none tracking-wide text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.3)] md:pb-[0.12em] md:text-[clamp(1.1rem,2vw,1.85rem)] md:[text-shadow:none] lg:text-[clamp(1.1rem,2.1vw,2.75rem)]"
           >
-            LA GLIA | Azienda Agricola
+            <span className="hero-text-hover origin-center md:origin-left">
+              LA GLIA | Azienda Agricola
+            </span>
           </span>
         </header>
 
@@ -103,7 +106,9 @@ export default function Hero({
               }}
               className="block"
             >
-              {t.hero.line1}
+              <span className="hero-text-hover origin-center md:origin-left">
+                {t.hero.line1}
+              </span>
             </span>
 
             {/* Line 2: "e" / "meets" (italic Poppins in #BD3B28 with its own delay) + "Design" on the same line */}
@@ -119,7 +124,12 @@ export default function Hero({
                 }}
                 className="inline-block font-sans italic font-normal text-[#BD3B28] pr-[0.06em]"
               >
-                {t.hero.conjunction}
+                <span
+                  style={{ '--hover-scale': '1.06' }}
+                  className="hero-text-hover origin-center md:origin-left"
+                >
+                  {t.hero.conjunction}
+                </span>
               </span>
               <span
                 style={{
@@ -132,7 +142,9 @@ export default function Hero({
                 }}
                 className="inline-block"
               >
-                {t.hero.line2End}
+                <span className="hero-text-hover origin-center md:origin-left">
+                  {t.hero.line2End}
+                </span>
               </span>
             </span>
           </h1>
@@ -172,13 +184,18 @@ export default function Hero({
             onClick={() => handleLanguageSelect('it')}
             aria-pressed={language === 'it'}
             aria-label="Italiano"
-            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+            className={`hero-hover-trigger relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
               language === 'it'
                 ? 'text-[#FFF9EE]'
                 : 'text-white/60 hover:text-white/90'
             }`}
           >
-            ITA
+            <span
+              style={{ '--hover-scale': '1.08' }}
+              className="hero-text-hover origin-center"
+            >
+              ITA
+            </span>
           </button>
 
           <button
@@ -186,19 +203,28 @@ export default function Hero({
             onClick={() => handleLanguageSelect('en')}
             aria-pressed={language === 'en'}
             aria-label="English"
-            className={`relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+            className={`hero-hover-trigger relative z-10 cursor-pointer rounded-full px-3.5 py-1 font-serif text-xs sm:text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-250 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
               language === 'en'
                 ? 'text-[#FFF9EE]'
                 : 'text-white/60 hover:text-white/90'
             }`}
           >
-            ENG
+            <span
+              style={{ '--hover-scale': '1.08' }}
+              className="hero-text-hover origin-center"
+            >
+              ENG
+            </span>
           </button>
         </div>
       </div>
 
       {/* Navigation Wheel: bottom-centered on mobile (< md), right-aligned on tablet/desktop (md+) */}
-      <MenuWheel onNavigate={handleNavigate} isLoaded={isLoaded} />
+      <MenuWheel
+        onNavigate={handleNavigate}
+        isLoaded={isLoaded}
+        isLogoHandedOff={isWheelLogoDocked}
+      />
     </section>
   )
 }

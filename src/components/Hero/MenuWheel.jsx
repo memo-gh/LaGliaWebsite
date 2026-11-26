@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../../i18n/useLanguage'
-
-const MENU_ITEMS = [
-  { id: 'contattaci', href: '#contattaci' },
-  { id: 'vini', href: '#vini' },
-  { id: 'territorio', href: '#territorio' },
-  { id: 'azienda', href: '#azienda' },
-  { id: 'eventi', href: '#eventi' },
-]
+import {
+  DESKTOP_LOGO_SCALE,
+  LOGO_COLOR,
+  LOGO_RINGS,
+  MENU_ITEMS,
+  MOBILE_LOGO_SCALE,
+} from './menuWheelConfig'
 
 // Desktop/Tablet (md+, >= 768px): 5 fixed angular slots surrounding the right-edge La Glia logo wheel:
 // 0° = directly left of the outer circle's center (in line with the middle of the hero text)
@@ -28,17 +27,6 @@ const DESKTOP_ORBIT_RADIUS = 290
 const MOBILE_ORBIT_RX = 260
 const MOBILE_ORBIT_RY = 296
 
-// Exact ring centerline geometry extracted from src/assets/true_coloredLaGliaLogo.svg
-// (viewBox 0 0 180 174, outer center at (90, 87)):
-const LOGO_COLOR = '#BB4732'
-const LOGO_RINGS = [
-  { cx: 0, cy: 0, rx: 88.2, ry: 85.26, strokeWidth: 3.54, delayMs: 0 },
-  { cx: -0.5, cy: 5.5, rx: 67.7625, ry: 67.7625, strokeWidth: 3.475, delayMs: 120 },
-  { cx: -9, cy: 20.5, rx: 47.285, ry: 47.7675, strokeWidth: 3.45, delayMs: 240 },
-]
-const DESKTOP_LOGO_SCALE = 196.5 / 90
-const MOBILE_LOGO_SCALE = 158.5 / 90
-
 const WHEEL_UNITS = {
   mobile: 'clamp(0.44px, min(0.148vw, 0.108dvh), 0.96px)',
   tablet: 'clamp(0.58px, min(0.138dvh, 0.084vw), 0.9px)',
@@ -46,6 +34,8 @@ const WHEEL_UNITS = {
 }
 
 const ANIMATION_DURATION_MS = 900
+const HIGHLIGHT_SCALE = 1.15
+const BASE_SCALE = Number((1 / HIGHLIGHT_SCALE).toFixed(4))
 
 function getViewportMode() {
   if (typeof window === 'undefined') return 'desktop'
@@ -58,7 +48,11 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
 
-export default function MenuWheel({ onNavigate, isLoaded = true }) {
+export default function MenuWheel({
+  onNavigate,
+  isLoaded = true,
+  isLogoHandedOff = false,
+}) {
   const { t } = useLanguage()
   const [viewportMode, setViewportMode] = useState(getViewportMode)
   const isMobile = viewportMode === 'mobile'
@@ -255,6 +249,8 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
         {isMobile ? (
           /* 3 Nested Red Logo Arcs anchored at the bottom edge (y = 0) and drawn left-to-right */
           <svg
+            data-menu-wheel-logo="true"
+            data-menu-wheel-mode="mobile"
             width="440"
             height="220"
             viewBox="-220 -220 440 220"
@@ -262,6 +258,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             style={{
               width: 'calc(440 * var(--wheel-unit))',
               height: 'calc(220 * var(--wheel-unit))',
+              opacity: isLogoHandedOff ? 0 : 1,
             }}
             className="absolute bottom-0 left-0 -translate-x-1/2 overflow-visible"
             aria-hidden="true"
@@ -285,6 +282,8 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
         ) : (
           /* 3 Nested Red Logo Circles shifted left from the right edge and drawn counter-clockwise top-to-bottom */
           <svg
+            data-menu-wheel-logo="true"
+            data-menu-wheel-mode="desktop"
             width="440"
             height="440"
             viewBox="-220 -220 440 440"
@@ -292,6 +291,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             style={{
               width: 'calc(440 * var(--wheel-unit))',
               height: 'calc(440 * var(--wheel-unit))',
+              opacity: isLogoHandedOff ? 0 : 1,
             }}
             className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 overflow-visible"
             aria-hidden="true"
@@ -327,7 +327,7 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             : -Math.sin(angleRad) * DESKTOP_ORBIT_RADIUS
 
           const isCenter = activeCenterId === item.id
-          const isHovered = hoveredId === item.id
+          const isHovered = !isAnimating && hoveredId === item.id
           const isHighlighted = isCenter || isHovered
           const label = t.menuWheel.items[item.id] ?? item.id
 
@@ -340,16 +340,16 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
             <div
               key={item.id}
               style={{
-                transform: `translate3d(calc(${x.toFixed(2)} * var(--wheel-unit)), calc(${y.toFixed(2)} * var(--wheel-unit)), 0)`,
+                transform: `translate3d(calc(${x.toFixed(2)} * var(--wheel-unit)), calc(${y.toFixed(2)} * var(--wheel-unit)), 0) translate3d(-50%, -50%, 0)`,
               }}
-              className="pointer-events-auto absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+              className="pointer-events-auto absolute left-0 top-0"
             >
               <div
                 style={{
                   opacity: isLoaded ? 1 : 0,
                   transform: isLoaded
-                    ? 'translateY(0px)'
-                    : `translateY(${hiddenOffsetY})`,
+                    ? 'translate3d(0, 0, 0)'
+                    : `translate3d(0, ${hiddenOffsetY}, 0)`,
                   transition: `opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) ${entranceDelayMs}ms, transform 480ms cubic-bezier(0.22, 1, 0.36, 1) ${entranceDelayMs}ms`,
                 }}
               >
@@ -357,22 +357,52 @@ export default function MenuWheel({ onNavigate, isLoaded = true }) {
                   href={item.href}
                   onClick={(e) => handleLinkClick(e, item, index)}
                   onMouseEnter={() => setHoveredId(item.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{
-                    fontSize: isMobile
-                      ? 'calc(28 * var(--wheel-unit))'
-                      : 'calc(31 * var(--wheel-unit))',
-                    transform: isHighlighted ? 'scale(1.15)' : 'scale(1)',
-                    transition:
-                      'color 250ms ease, transform 250ms ease, text-shadow 250ms ease',
-                  }}
-                  className={`block cursor-pointer whitespace-nowrap px-1.5 py-1 font-serif font-bold leading-tight tracking-tight md:p-0 ${
-                    isHighlighted
-                      ? 'text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)] md:[text-shadow:0_2px_16px_rgba(0,0,0,0.35)]'
-                      : 'text-white/75 [text-shadow:0_2px_10px_rgba(0,0,0,0.45)] md:text-[#6A717A]/85 md:[text-shadow:none]'
-                  }`}
+                  onMouseLeave={() =>
+                    setHoveredId((prev) => (prev === item.id ? null : prev))
+                  }
+                  onFocus={() => setHoveredId(item.id)}
+                  onBlur={() =>
+                    setHoveredId((prev) => (prev === item.id ? null : prev))
+                  }
+                  className="block cursor-pointer px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 rounded-sm"
                 >
-                  {label}
+                  <span
+                    style={{
+                      fontSize: isMobile
+                        ? `calc(${(28 * HIGHLIGHT_SCALE).toFixed(2)} * var(--wheel-unit))`
+                        : `calc(${(31 * HIGHLIGHT_SCALE).toFixed(2)} * var(--wheel-unit))`,
+                      transform: isHighlighted
+                        ? 'translate3d(0, 0, 0) scale3d(1, 1, 1)'
+                        : `translate3d(0, 0, 0) scale3d(${BASE_SCALE}, ${BASE_SCALE}, 1)`,
+                      transformOrigin: 'center center',
+                      transition: 'transform 250ms ease',
+                      willChange: 'transform',
+                      backfaceVisibility: 'hidden',
+                    }}
+                    className="relative block whitespace-nowrap font-serif font-bold leading-tight tracking-tight"
+                  >
+                    <span
+                      style={{
+                        opacity: isHighlighted ? 0 : 1,
+                        transition: 'opacity 250ms ease',
+                        willChange: 'opacity',
+                      }}
+                      className="block text-white/75 [text-shadow:0_2px_10px_rgba(0,0,0,0.45)] md:text-[#6A717A]/85 md:[text-shadow:none]"
+                    >
+                      {label}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        opacity: isHighlighted ? 1 : 0,
+                        transition: 'opacity 250ms ease',
+                        willChange: 'opacity',
+                      }}
+                      className="pointer-events-none absolute inset-0 block text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)] md:[text-shadow:0_2px_16px_rgba(0,0,0,0.35)]"
+                    >
+                      {label}
+                    </span>
+                  </span>
                 </a>
               </div>
             </div>

@@ -14,6 +14,7 @@ import './App.css'
 function App() {
   const [isHeroReady, setIsHeroReady] = useState(false)
   const [isWipOpen, setIsWipOpen] = useState(false)
+  const [isWheelLogoDocked, setIsWheelLogoDocked] = useState(false)
 
   const openWip = () => setIsWipOpen(true)
   const closeWip = () => setIsWipOpen(false)
@@ -36,13 +37,13 @@ function App() {
     <LanguageProvider>
       <main className="bg-[#0A0A0A]">
         <LoadingScreen onStartExit={() => setIsHeroReady(true)} />
-        <Hero isReady={isHeroReady} />
+        <Hero isReady={isHeroReady} isWheelLogoDocked={isWheelLogoDocked} />
         <Terroir />
         <Company />
         <Wine onOpenWip={openWip} />
         <Events onOpenWip={openWip} />
         <Footer />
-        <ScrollToTop />
+        <ScrollToTop onDockStateChange={setIsWheelLogoDocked} />
         <WIP isOpen={isWipOpen} onClose={closeWip} />
       </main>
     </LanguageProvider>
